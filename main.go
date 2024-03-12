@@ -74,6 +74,7 @@ func dense(in []float32, wgt [][]float32, bias float32, act string) []float32 {
 
 func denseBackpropagation() {
 
+	lr := float32(0.5)
 	input := []float32{0.05, 0.1}
 	w1 := [][]float32{{0.15, 0.2}, {0.25, 0.3}}
 	w2 := [][]float32{{0.40, 0.45}, {0.50, 0.55}}
@@ -88,12 +89,35 @@ func denseBackpropagation() {
 	out2 := dense(out1, w2, bias[1], "sigmoid")
 	fmt.Println(out2)
 
+	dout2 := make([]float32, len(out2))
+	// dw1 := make([][]float32, len(w1))
 	target := []float32{0.01, 0.99}
 	outLoss := loss(out2, target)
 	fmt.Println(outLoss)
 	totalLoss := sumArr(outLoss)
 	fmt.Println("Total loss:", totalLoss)
 
+	for i := range w2 {
+		for j := range w2[0] {
+			delta := -(target[i] - out2[i]) * sigmoidDer(out2[i])
+			dout2[j] += delta * w2[i][j]
+			fmt.Println(delta * w2[i][j])
+			fmt.Println("Delta:", -(target[i] - out2[i]), "*", sigmoidDer(out2[i]), "*", out1[j], "=", dout2[i])
+			w2[i][j] = w2[i][j] - lr*delta*out1[j]
+		}
+	}
+	fmt.Println(dout2)
+	fmt.Println(w2)
+	fmt.Println("Layer 1:")
+	for i := range w1 {
+		for j := range w2[0] {
+			delta := dout2[i] * sigmoidDer(out1[i])
+			// dout2[i] = delta
+			fmt.Println("Delta:", dout2[i], "*", sigmoidDer(out1[i]), "*", input[j], "=", dout2[i]*sigmoidDer(out1[i])*input[j])
+			w1[i][j] = w1[i][j] - lr*delta*input[j]
+		}
+	}
+	fmt.Println(w1)
 }
 
 func loss(arr []float32, target []float32) []float32 {
