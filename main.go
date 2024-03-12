@@ -16,31 +16,44 @@ func main() {
 	const w = 30
 	const c = 32
 
-	inStrArr := readFile("test/in.txt")
-	wgtStrArr := readFile("test/wgt.txt")
-	outStrArr := readFile("test/out.txt")
+	inStrArr := readFile("test/inpy.txt")
+	wgtStrArr := readFile("test/wgtpy.txt")
+	outStrArr := readFile("test/outpy.txt")
 
-	inArr := strArrToTensor(inStrArr, 1, h, w, c)
-	wgtArr := strArrToTensor(wgtStrArr, 3, 3, 32, 32)
-	outArr := strArrToTensor(outStrArr, 1, h, w, c)
-	fmt.Println(inArr[0][0][0])
-	fmt.Println(wgtArr[0][0][0])
-	fmt.Println(outArr[0][0][0])
+	// inArr := strArrToTensor(inStrArr, 1, h, w, c)
+	// wgtArr := strArrToTensor(wgtStrArr, 3, 3, 32, 32)
+	// outArr := strArrToTensor(outStrArr, 1, h, w, c)
+	// fmt.Println(inArr[0][0][0])
+	// fmt.Println(wgtArr[0][0][0])
+	// fmt.Println(outArr[0][0][0])
+	inArr := strArrToFlat(inStrArr, 1, 16)
+	wgtArr := strArrToFlat(wgtStrArr, 32, 16)
+	outArr := strArrToFlat(outStrArr, 1, 32)
+	fmt.Println(inArr)
+	// fmt.Println(wgtArr)
+	fmt.Println(outArr)
+	out := dense(inArr[0], wgtArr, true)
+	fmt.Println(out)
 }
 
 func dense(in []float32, wgt [][]float32, relu bool) []float32 {
 
 	out := make([]float32, len(wgt))
 	for i, k := range wgt {
+		var temp float32 = 0
 		for j := range in {
-			if relu {
-				out[i] = max(0, in[j]*k[j])
-			} else {
-				out[i] = in[j] * k[j]
-			}
+			temp += in[j] * k[j]
+			// if i == 19 {
+			// 	fmt.Println(in[j], k[j], temp)
+			// }
+		}
+		if relu {
+			out[i] = max(0, temp)
+		} else {
+			out[i] = temp
 		}
 	}
-	return nil
+	return out
 }
 
 // func conv2d(in, wgt tensor, relu, padding bool) tensor {
@@ -70,11 +83,26 @@ func readFile(fileName string) []string {
 	return strArr
 }
 
-func strArrToFlat(s []string, x, y int) []float32 {
+func strArrToFlat(s []string, x, y int) [][]float32 {
 	if len(s) < x*y {
 		log.Fatalf("func strArrToTensor: Input string length %d smaller than array size %d.\n", len(s), x*y)
 	}
-	return nil
+	si := 0
+	arr := make([][]float32, x)
+	for i := 0; i < x; i++ {
+		arr[i] = make([]float32, y)
+		for j := 0; j < y; j++ {
+			if len(s[si]) > 0 {
+				temp, err := strconv.ParseFloat(s[si], 32)
+				if err != nil {
+					log.Fatalln(err, i, j, temp, s[si], len(s[si]))
+				}
+				arr[i][j] = float32(temp)
+			}
+			si++
+		}
+	}
+	return arr
 }
 
 func strArrToTensor(s []string, b, h, w, c int) tensor {

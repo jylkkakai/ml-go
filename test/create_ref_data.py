@@ -32,14 +32,15 @@ model.compile(
 wgts = model.get_weights()
 # print(type(wgts[0]))
 print(wgts[0].shape)
-# wgt = wgts[0].transpose((3, 0, 1, 2))
+wgt = wgts[0].transpose((1, 0))
+print(wgt.shape)
 # print(wgt.shape)
 out = model.predict(in_data)
 # print(type(out))
 # print(out.shape)
 
 print(in_data.shape)
-# print(wgt.shape)
+print(wgt)
 print(out.shape)
 
 
@@ -48,10 +49,11 @@ def write_flat(filename, arr):
         for i in arr:
             for data in i:
                 outfile.write(str(data) + " ")
+            # outfile.write("\n")
 
 
 write_flat("inpy.txt", in_data)
-write_flat("wgtpy.txt", wgts[0])
+write_flat("wgtpy.txt", wgt)
 write_flat("outpy.txt", out)
 # def write_array(filename, arr):
 #     with open(filename, "w") as outfile:
