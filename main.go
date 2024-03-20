@@ -38,68 +38,103 @@ func main() {
 	// out1 := dense(input, w1, bias[0], "sigmoid")
 	// fmt.Println(out1)
 	// out2 := dense(out1, w2, bias[1], "sigmoid")
-	denseBackpropagation()
+	train()
 
 }
 
-func dense(in []float32, wgt [][]float32, bias float32, act string) []float32 {
-	
+func dense(in []float32, wgt [][]float32, bias []float32, act string) []float32 {
+
+	var activ activation
+	switch act {
+	case "relu":
+		activ = relu
+	case "sigmoid":
+		activ = sigmoid
+	default:
+		activ = pass
+	}
+	out := make([]float32, len(wgt))
+	for i, k := range wgt {
+		var temp float32 = 0
+		for j := range in {
+			temp += in[j] * k[j]
 		}
-		out[i] = activate(temp, bias, activ)
-		// if relu {
-		// 	out[i] = max(0, temp+bias)
-		// } else {
-		// 	out[i] = temp + bias
-		// }
+		out[i] = activate(temp, bias[i], activ)
 	}
 	return out
 }
 
-func denseBackpropagation() {
+func denseBP(w [][]float32, b []float32, err []float32, input []float32, output []float32, lr float32) []float32 {
+
+	errout := make([]float32, len(input))
+	for i := range w {
+		delta := err[i] * sigmoidDer(output[i])
+		for j := range w[i] {
+			errout[j] += delta * w[i][j]
+			// fmt.Println(delta * w2[i][j])
+			// fmt.Println("Delta:", -(target[i] - out2[i]), "*", sigmoidDer(out2[i]), "*", out1[j], "=", dout2[i])
+			w[i][j] = w[i][j] - lr*delta*input[j]
+
+		}
+		b[i] = b[i] - lr*delta*1
+		fmt.Println(b)
+	}
+	return errout
+}
+
+func train() {
 
 	lr := float32(0.5)
 	input := []float32{0.05, 0.1}
 	w1 := [][]float32{{0.15, 0.2}, {0.25, 0.3}}
 	w2 := [][]float32{{0.40, 0.45}, {0.50, 0.55}}
-	bias := []float32{0.35, 0.6}
+	bias1 := []float32{0.35, 0.35}
+	bias2 := []float32{0.6, 0.6}
 
-	net1 := dense(input, w1, bias[0], "")
-	fmt.Println(net1)
-	out1 := dense(input, w1, bias[0], "sigmoid")
-	fmt.Println(out1)
-	net2 := dense(out1, w2, bias[1], "")
-	fmt.Println(net2)
-	out2 := dense(out1, w2, bias[1], "sigmoid")
-	fmt.Println(out2)
+	// net1 := dense(input, w1, bias1, "")
+	// fmt.Println(net1)
+	out1 := dense(input, w1, bias1, "sigmoid")
+	// fmt.Println(out1)
+	// net2 := dense(out1, w2, bias[1], "")
+	// fmt.Println(net2)
+	out2 := dense(out1, w2, bias2, "sigmoid")
+	// fmt.Println(out2)
 
 	dout2 := make([]float32, len(out2))
 	// dw1 := make([][]float32, len(w1))
 	target := []float32{0.01, 0.99}
-	outLoss := loss(out2, target)
-	fmt.Println(outLoss)
-	totalLoss := sumArr(outLoss)
-	fmt.Println("Total loss:", totalLoss)
-
-	for i := range w2 {
-		for j := range w2[0] {
-			delta := -(target[i] - out2[i]) ** sigmoidDer(out2[i])
-			dout2[j] += delta * w2[i][j]
-			fmt.Println(delta * w2[i][j])
-			fmt.Println("Delta:", -(target[i] - out2[i]), "*", sigmoidDer(out2[i]), "*", out1[j], "=", dout2[i])
-			w2[i][j] = w2[i][j] - lr*delta*out1[j]
-		}
-	}
+	// outLoss := loss(out2, target)
+	// fmt.Println(outLoss)
+	// totalLoss := sumArr(outLoss)
+	// fmt.Println("Total loss:", totalLoss)
+	fmt.Println("Layer 2:")
+	err2 := loss(out2, target)
+	dout2 = denseBP(w2, bias2, err2, out1, out2, lr)
+	// for i := range w2 {
+	// 	delta := -(target[i] - out2[i]) * sigmoidDer(out2[i])
+	// 	for j := range w2[i] {
+	// 		dout2[j] += delta * w2[i][j]
+	// 		// fmt.Println(delta * w2[i][j])
+	// 		// fmt.Println("Delta:", -(target[i] - out2[i]), "*", sigmoidDer(out2[i]), "*", out1[j], "=", dout2[i])
+	// 		w2[i][j] = w2[i][j] - lr*delta*out1[j]
+	//
+	// 	}
+	// 	bias2[i] = bias2[i] - lr*delta*1
+	// 	fmt.Println(bias2)
+	// }
 	fmt.Println(dout2)
 	fmt.Println(w2)
+	fmt.Println(bias2)
 	fmt.Println("Layer 1:")
-	for i := range w1 {
-		for j := range w2[0] {
-			delta := dout2[i] * sigmoidDer(out1[i])
-			// dout2[i] = delta
-			fmt.Println("Delta:", dout2[i], "*", sigmoidDer(out1[i]), "*", input[j], "=", dout2[i]*sigmoidDer(out1[i])*input[j])
-			w1[i][j] = w1[i][j] - lr*delta*input[j]
-		}
-	}
+	_ = denseBP(w1, bias1, dout2, input, out1, lr)
+	// for i := range w1 {
+	// 	for j := range w1[i] {
+	// 		delta := dout2[i] * sigmoidDer(out1[i])
+	// 		// dout2[i] = delta
+	// 		// fmt.Println("Delta:", dout2[i], "*", sigmoidDer(out1[i]), "*", input[j], "=", dout2[i]*sigmoidDer(out1[i])*input[j])
+	// 		w1[i][j] = w1[i][j] - lr*delta*input[j]
+	// 	}
+	// }
 	fmt.Println(w1)
 }
 
@@ -107,7 +142,7 @@ func loss(arr []float32, target []float32) []float32 {
 	resArr := make([]float32, len(arr))
 	for i := range arr {
 		temp := target[i] - arr[i]
-		resArr[i] = 0.5 * temp * temp
+		resArr[i] = -temp
 	}
 	return resArr
 }
