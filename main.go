@@ -43,24 +43,7 @@ func main() {
 }
 
 func dense(in []float32, wgt [][]float32, bias float32, act string) []float32 {
-
-	var activ activation
-	switch act {
-	case "relu":
-		activ = relu
-	case "sigmoid":
-		activ = sigmoid
-	default:
-		activ = pass
-	}
-	out := make([]float32, len(wgt))
-	for i, k := range wgt {
-		var temp float32 = 0
-		for j := range in {
-			temp += in[j] * k[j]
-			// if i == 19 {
-			// 	fmt.Println(in[j], k[j], temp)
-			// }
+	
 		}
 		out[i] = activate(temp, bias, activ)
 		// if relu {
@@ -99,7 +82,7 @@ func denseBackpropagation() {
 
 	for i := range w2 {
 		for j := range w2[0] {
-			delta := -(target[i] - out2[i]) * sigmoidDer(out2[i])
+			delta := -(target[i] - out2[i]) ** sigmoidDer(out2[i])
 			dout2[j] += delta * w2[i][j]
 			fmt.Println(delta * w2[i][j])
 			fmt.Println("Delta:", -(target[i] - out2[i]), "*", sigmoidDer(out2[i]), "*", out1[j], "=", dout2[i])
