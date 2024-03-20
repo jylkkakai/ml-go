@@ -9,7 +9,14 @@ import (
 	"strings"
 )
 
-type tensor [][][][]float32
+type layer func([]float32, [][]float32, []float32, string) []float32
+
+type NeuralNetwork struct {
+	layer []layer
+	w     [][][]float32
+	b     []float32
+	lr    float32
+}
 
 func main() {
 
@@ -38,6 +45,19 @@ func main() {
 	// out1 := dense(input, w1, bias[0], "sigmoid")
 	// fmt.Println(out1)
 	// out2 := dense(out1, w2, bias[1], "sigmoid")
+
+	lr := float32(0.5)
+	input := []float32{0.05, 0.1}
+	w1 := [][]float32{{0.15, 0.25}, {0.2, 0.3}}
+	w2 := [][]float32{{0.40, 0.5}, {0.45, 0.55}}
+	bias1 := []float32{0.35, 0.35}
+	bias2 := []float32{0.6, 0.6}
+	target := []float32{0.01, 0.99}
+
+	net := NeuralNetwork{
+		lr: lr,
+	}
+	net.w = append(net.w, w1)
 	train()
 
 }
@@ -71,13 +91,10 @@ func denseBP(w [][]float32, b []float32, err []float32, input []float32, output 
 		delta := err[i] * sigmoidDer(output[i])
 		for j := range w[i] {
 			errout[j] += delta * w[i][j]
-			// fmt.Println(delta * w2[i][j])
-			// fmt.Println("Delta:", -(target[i] - out2[i]), "*", sigmoidDer(out2[i]), "*", out1[j], "=", dout2[i])
 			w[i][j] = w[i][j] - lr*delta*input[j]
 
 		}
 		b[i] = b[i] - lr*delta*1
-		fmt.Println(b)
 	}
 	return errout
 }
@@ -86,56 +103,27 @@ func train() {
 
 	lr := float32(0.5)
 	input := []float32{0.05, 0.1}
-	w1 := [][]float32{{0.15, 0.2}, {0.25, 0.3}}
-	w2 := [][]float32{{0.40, 0.45}, {0.50, 0.55}}
+	w1 := [][]float32{{0.15, 0.25}, {0.2, 0.3}}
+	w2 := [][]float32{{0.40, 0.5}, {0.45, 0.55}}
 	bias1 := []float32{0.35, 0.35}
 	bias2 := []float32{0.6, 0.6}
-
-	// net1 := dense(input, w1, bias1, "")
-	// fmt.Println(net1)
-	out1 := dense(input, w1, bias1, "sigmoid")
-	// fmt.Println(out1)
-	// net2 := dense(out1, w2, bias[1], "")
-	// fmt.Println(net2)
-	out2 := dense(out1, w2, bias2, "sigmoid")
-	// fmt.Println(out2)
-
-	dout2 := make([]float32, len(out2))
-	// dw1 := make([][]float32, len(w1))
 	target := []float32{0.01, 0.99}
-	// outLoss := loss(out2, target)
-	// fmt.Println(outLoss)
-	// totalLoss := sumArr(outLoss)
-	// fmt.Println("Total loss:", totalLoss)
+
+	out1 := dense(input, w1, bias1, "sigmoid")
+	out2 := dense(out1, w2, bias2, "sigmoid")
+
+	// dout2 := make([]float32, len(out2))
+
 	fmt.Println("Layer 2:")
 	err2 := loss(out2, target)
-	dout2 = denseBP(w2, bias2, err2, out1, out2, lr)
-	// for i := range w2 {
-	// 	delta := -(target[i] - out2[i]) * sigmoidDer(out2[i])
-	// 	for j := range w2[i] {
-	// 		dout2[j] += delta * w2[i][j]
-	// 		// fmt.Println(delta * w2[i][j])
-	// 		// fmt.Println("Delta:", -(target[i] - out2[i]), "*", sigmoidDer(out2[i]), "*", out1[j], "=", dout2[i])
-	// 		w2[i][j] = w2[i][j] - lr*delta*out1[j]
-	//
-	// 	}
-	// 	bias2[i] = bias2[i] - lr*delta*1
-	// 	fmt.Println(bias2)
-	// }
+	dout2 := denseBP(w2, bias2, err2, out1, out2, lr)
 	fmt.Println(dout2)
 	fmt.Println(w2)
 	fmt.Println(bias2)
 	fmt.Println("Layer 1:")
 	_ = denseBP(w1, bias1, dout2, input, out1, lr)
-	// for i := range w1 {
-	// 	for j := range w1[i] {
-	// 		delta := dout2[i] * sigmoidDer(out1[i])
-	// 		// dout2[i] = delta
-	// 		// fmt.Println("Delta:", dout2[i], "*", sigmoidDer(out1[i]), "*", input[j], "=", dout2[i]*sigmoidDer(out1[i])*input[j])
-	// 		w1[i][j] = w1[i][j] - lr*delta*input[j]
-	// 	}
-	// }
 	fmt.Println(w1)
+	fmt.Println(bias1)
 }
 
 func loss(arr []float32, target []float32) []float32 {
