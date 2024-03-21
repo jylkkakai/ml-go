@@ -30,7 +30,7 @@ print(len(wgts))
 print(wgts[0].shape)
 print(wgts)
 model.set_weights(wgts)
-
+np.save("../data/wgt.npy", wgts[0])
 out = model.predict(in_data)
 
 print(in_data.shape)

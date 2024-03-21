@@ -9,80 +9,74 @@ import (
 	"strings"
 )
 
-type layer func([]float32, [][]float32, []float32, string) []float32
-
-type NeuralNetwork struct {
-	layer []layer
-	w     [][][]float32
-	b     []float32
-	lr    float32
-}
-
+// type layer func([]float32, [][]float32, []float32, string) []float32
+//
+//	type NeuralNetwork struct {
+//		layer []layer
+//		w     [][][]float32
+//		b     []float32
+//		lr    float32
+//	}
 func main() {
 
-	const h = 20
-	const w = 30
-	const c = 32
+	t := Tensor{}
 
-	// inStrArr := readFile("test/inpy.txt")
-	// wgtStrArr := readFile("test/wgtpy.txt")
-	// outStrArr := readFile("test/outpy.txt")
+	t.arr = []float32{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}
+	t.shape = []int{3, 2}
 
-	// bias := make([]float32, 32)
-	// inArr := strArrToFlat(inStrArr, 1, 16)
-	// wgtArr := strArrToFlat(wgtStrArr, 32, 16)
-	// outArr := strArrToFlat(outStrArr, 1, 32)
-	// fmt.Println(inArr)
-	// fmt.Println(outArr)
-	// out := dense(inArr[0], wgtArr, 0, "")
-	// fmt.Println(out)
-	// out = dense(inArr[0], wgtArr, 1, "relu")
-	// fmt.Println(out)
-	// input := []float32{0.05, 0.1}
-	// w1 := [][]float32{{0.15, 0.2}, {0.25, 0.3}}
-	// w2 := [][]float32{{0.40, 0.45}, {0.50, 0.55}}
-	// bias := []float32{0.35, 0.6}
-	// out1 := dense(input, w1, bias[0], "sigmoid")
-	// fmt.Println(out1)
-	// out2 := dense(out1, w2, bias[1], "sigmoid")
-
-	lr := float32(0.5)
-	input := []float32{0.05, 0.1}
-	w1 := [][]float32{{0.15, 0.25}, {0.2, 0.3}}
-	w2 := [][]float32{{0.40, 0.5}, {0.45, 0.55}}
-	bias1 := []float32{0.35, 0.35}
-	bias2 := []float32{0.6, 0.6}
-	target := []float32{0.01, 0.99}
-
-	net := NeuralNetwork{
-		lr: lr,
-	}
-	net.w = append(net.w, w1)
-	train()
-
-}
-
-func dense(in []float32, wgt [][]float32, bias []float32, act string) []float32 {
-
-	var activ activation
-	switch act {
-	case "relu":
-		activ = relu
-	case "sigmoid":
-		activ = sigmoid
-	default:
-		activ = pass
-	}
-	out := make([]float32, len(wgt))
-	for i, k := range wgt {
-		var temp float32 = 0
-		for j := range in {
-			temp += in[j] * k[j]
+	for i := 0; i < 3; i++ {
+		for j := 0; j < 2; j++ {
+			fmt.Println(t.at(i, j))
 		}
-		out[i] = activate(temp, bias[i], activ)
 	}
-	return out
+	// t.at(0, 0)
+	// t.at(0, 1)
+	// t.at(1, 0)
+	// t.at(1, 1)
+	// t.at(2, 0)
+	// t.at(2, 1)
+	// fmt.Println(in)
+	// fmt.Printf("in:\n%v\n", in)
+	// fmt.Printf("w:\n%v\n", w)
+	// dense(in, w0.(*Dense), b, "")
 }
+
+// func dense(in *Dense, w *Dense, b *Dense, act string) *Dense {
+//
+// 	// var activ activation
+// 	// switch act {
+// 	// case "relu":
+// 	// 	activ = relu
+// 	// case "sigmoid":
+// 	// 	activ = sigmoid
+// 	// default:
+// 	// 	activ = pass
+// 	// }
+// 	fmt.Println(in)
+// 	fmt.Printf("in:\n%v\n", in)
+// 	fmt.Printf("w:\n%v\n", w)
+// 	// w0, _ := w.Slice(S(0), S(0), nil)
+// 	// fmt.Printf("w0:\n%v\n", w0)
+// 	// w1, _ := w.Slice(S(0), nil, S(0))
+// 	// fmt.Printf("w1:\n%v\n", w1)
+// 	fmt.Printf("w:\n%v\n", w)
+// 	// out := make([]float32, len(w))
+// 	fmt.Printf("b:\n%v\n", b)
+// 	fmt.Println(w.Shape())
+// 	for i := 0; i < w.Shape()[0]; i++ {
+// 		tempw, _ := w.Slice(S(i), nil)
+// 		fmt.Printf("tempw:\n%v\n", tempw)
+// 		tempm, _ := in.Mul(tempw.(*Dense))
+// 		fmt.Printf("tempw:\n%v\n", tempm)
+// 		temps, _ := tempm.Sum()
+// 		fmt.Printf("temps:\n%v\n", temps)
+// 		temp := float32(0)
+// 		tempsi, _ := temps.At(0)
+// 		temp += tempsi
+// 	}
+// 	// out := in
+// 	return w
+// }
 
 func denseBP(w [][]float32, b []float32, err []float32, input []float32, output []float32, lr float32) []float32 {
 
@@ -99,32 +93,32 @@ func denseBP(w [][]float32, b []float32, err []float32, input []float32, output 
 	return errout
 }
 
-func train() {
-
-	lr := float32(0.5)
-	input := []float32{0.05, 0.1}
-	w1 := [][]float32{{0.15, 0.25}, {0.2, 0.3}}
-	w2 := [][]float32{{0.40, 0.5}, {0.45, 0.55}}
-	bias1 := []float32{0.35, 0.35}
-	bias2 := []float32{0.6, 0.6}
-	target := []float32{0.01, 0.99}
-
-	out1 := dense(input, w1, bias1, "sigmoid")
-	out2 := dense(out1, w2, bias2, "sigmoid")
-
-	// dout2 := make([]float32, len(out2))
-
-	fmt.Println("Layer 2:")
-	err2 := loss(out2, target)
-	dout2 := denseBP(w2, bias2, err2, out1, out2, lr)
-	fmt.Println(dout2)
-	fmt.Println(w2)
-	fmt.Println(bias2)
-	fmt.Println("Layer 1:")
-	_ = denseBP(w1, bias1, dout2, input, out1, lr)
-	fmt.Println(w1)
-	fmt.Println(bias1)
-}
+// func train() {
+//
+// 	lr := float32(0.5)
+// 	input := []float32{0.05, 0.1}
+// 	w1 := [][]float32{{0.15, 0.25}, {0.2, 0.3}}
+// 	w2 := [][]float32{{0.40, 0.5}, {0.45, 0.55}}
+// 	bias1 := []float32{0.35, 0.35}
+// 	bias2 := []float32{0.6, 0.6}
+// 	target := []float32{0.01, 0.99}
+//
+// 	out1 := dense(input, w1, bias1, "sigmoid")
+// 	out2 := dense(out1, w2, bias2, "sigmoid")
+//
+// 	// dout2 := make([]float32, len(out2))
+//
+// 	fmt.Println("Layer 2:")
+// 	err2 := loss(out2, target)
+// 	dout2 := denseBP(w2, bias2, err2, out1, out2, lr)
+// 	fmt.Println(dout2)
+// 	fmt.Println(w2)
+// 	fmt.Println(bias2)
+// 	fmt.Println("Layer 1:")
+// 	_ = denseBP(w1, bias1, dout2, input, out1, lr)
+// 	fmt.Println(w1)
+// 	fmt.Println(bias1)
+// }
 
 func loss(arr []float32, target []float32) []float32 {
 	resArr := make([]float32, len(arr))
@@ -207,35 +201,6 @@ func strArrToFlat(s []string, x, y int) [][]float32 {
 				arr[i][j] = float32(temp)
 			}
 			si++
-		}
-	}
-	return arr
-}
-
-func strArrToTensor(s []string, b, h, w, c int) tensor {
-
-	if len(s) < b*h*w*c {
-		log.Fatalf("func strArrToTensor: Input string length %d smaller than array size %d.\n", len(s), b*h*w*c)
-	}
-	arr := make([][][][]float32, b)
-	si := 0
-	for i := 0; i < b; i++ {
-		arr[i] = make([][][]float32, h)
-		for j := 0; j < h; j++ {
-			arr[i][j] = make([][]float32, w)
-			for k := 0; k < w; k++ {
-				arr[i][j][k] = make([]float32, c)
-				for l := 0; l < c; l++ {
-					if len(s[si]) > 0 {
-						temp, err := strconv.ParseFloat(s[si], 32)
-						if err != nil {
-							log.Fatalln(err, i, j, k, l, temp, s[si], len(s[si]))
-						}
-						arr[i][j][k][l] = float32(temp)
-					}
-					si++
-				}
-			}
 		}
 	}
 	return arr
