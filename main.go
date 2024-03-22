@@ -29,6 +29,8 @@ func main() {
 			fmt.Println(t.at(i, j))
 		}
 	}
+	t2 := Tensor{}
+	t2.readNpy("data/test_at0.npy")
 	// t.at(0, 0)
 	// t.at(0, 1)
 	// t.at(1, 0)

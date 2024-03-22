@@ -1,71 +1,30 @@
+import random
+
 import numpy as np
-import tensorflow as tf
 
-h = 20
-w = 30
-c = 32
+dims = 1
+for i in range(0, 12):
 
-# in_data = np.random.randint(-128, 127, size=(h, w, c))
-in_data = np.random.randint(-128, 127, size=(1, 16))
+    shape = []
+    for j in range(0, dims):
+        shape.append(random.randint(2, 10))
 
-# with open("in.txt", "w") as outfile:
-#     for slice in in_data:
-#         np.savetxt(outfile, slice, fmt="%i")
-#         print(slice)
+    # print(hape
+    arr = np.random.random(size=shape).astype(np.float32)
+    print("Shape:", arr.shape)
+    filename = "../data/test_at{}".format(i)
+    np.save(filename + ".npy", arr)
+    index = []
+    with open(filename + ".txt", "w") as file:
+        for j in range(0, 10):
+            index = []
+            for k in range(0, len(shape)):
+                index.append(random.randint(1, shape[k]) - 1)
+                # print("Index:", index)
 
-# in_data = np.reshape(in_data, (1, h, w, c))
-# model = tf.keras.Sequential(
-#     [
-#         tf.keras.layers.Conv2D(
-#             32, 3, input_shape=(h, w, c), use_bias=False, padding="same"
-#         )
-#     ]
-# )
-model = tf.keras.Sequential(
-    [tf.keras.layers.Dense(32, input_shape=(16,), use_bias=False)]
-)
-model.compile(
-    optimizer="adam",
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-    metrics=["accuracy"],
-)
-wgts = model.get_weights()
-# print(type(wgts[0]))
-print(wgts[0].shape)
-wgt = wgts[0].transpose((1, 0))
-print(wgt.shape)
-# print(wgt.shape)
-out = model.predict(in_data)
-# print(type(out))
-# print(out.shape)
-
-print(in_data.shape)
-print(wgt)
-print(out.shape)
-
-
-def write_flat(filename, arr):
-    with open(filename, "w") as outfile:
-        for i in arr:
-            for data in i:
-                outfile.write(str(data) + " ")
-            # outfile.write("\n")
-
-
-write_flat("inpy.txt", in_data)
-write_flat("wgtpy.txt", wgt)
-write_flat("outpy.txt", out)
-# def write_array(filename, arr):
-#     with open(filename, "w") as outfile:
-#         for i in arr:
-#             for j in i:
-#                 for k in j:
-#                     for data in k:
-#                         outfile.write(str(data) + " ")
-#                     outfile.write("\n")
-#         print(filename)
-#
-#
-# write_array("in.txt", in_data)
-# write_array("wgt.txt", wgt)
-# write_array("out.txt", out)
+            file.write(str(index) + ";" + str(arr[tuple(index)]) + "\n")
+    # index = np.random.choice(arr, len(shape), replace=False)
+    # print("Index:", index)
+    # print("At:", arr[tuple(index)])
+    if i % 2 == 1:
+        dims += 1
