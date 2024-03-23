@@ -9,20 +9,36 @@ import (
 	"strings"
 )
 
-// type layer func([]float32, [][]float32, []float32, string) []float32
-//
-//	type NeuralNetwork struct {
-//		layer []layer
-//		w     [][][]float32
-//		b     []float32
-//		lr    float32
-//	}
 func main() {
 
-	t := Tensor{}
-	t.readNpy("data/test_at9.npy")
-	fmt.Println(t.at(3, 4, 0, 1, 2))
-	fmt.Println(t.shape)
+	w1 := Tensor{}
+	w1.readNpy("test_data/w1.npy")
+	w1.set(0.2, 0, 1)
+	w1.set(0.25, 1, 0)
+	fmt.Println(w1)
+	fmt.Println(w1.shape)
+	w2 := Tensor{}
+	w2.readNpy("test_data/w2.npy")
+	w2.set(0.45, 0, 1)
+	w2.set(0.5, 1, 0)
+	fmt.Println(w2)
+	fmt.Println(w2.shape)
+	b1 := Tensor{}
+	b1.readNpy("test_data/b1.npy")
+	fmt.Println(b1)
+	fmt.Println(b1.shape)
+	b2 := Tensor{}
+	b2.readNpy("test_data/b2.npy")
+	fmt.Println(b2)
+	fmt.Println(b2.shape)
+	in := Tensor{}
+	in.readNpy("test_data/in.npy")
+	fmt.Println(in)
+	fmt.Println(in.shape)
+	out := Tensor{}
+	out.readNpy("test_data/out.npy")
+	fmt.Println(out)
+	fmt.Println(out.shape)
 	// t.at(0, 0)
 	// t.at(0, 1)
 	// t.at(1, 0)
@@ -32,45 +48,40 @@ func main() {
 	// fmt.Println(in)
 	// fmt.Printf("in:\n%v\n", in)
 	// fmt.Printf("w:\n%v\n", w)
-	// dense(in, w0.(*Dense), b, "")
+	dout1 := dense(in, w1, b1, "sigmoid")
+	fmt.Println(dout1)
+	dout2 := dense(dout1, w2, b2, "sigmoid")
+	fmt.Println(dout2)
 }
 
-// func dense(in *Dense, w *Dense, b *Dense, act string) *Dense {
-//
-// 	// var activ activation
-// 	// switch act {
-// 	// case "relu":
-// 	// 	activ = relu
-// 	// case "sigmoid":
-// 	// 	activ = sigmoid
-// 	// default:
-// 	// 	activ = pass
-// 	// }
-// 	fmt.Println(in)
-// 	fmt.Printf("in:\n%v\n", in)
-// 	fmt.Printf("w:\n%v\n", w)
-// 	// w0, _ := w.Slice(S(0), S(0), nil)
-// 	// fmt.Printf("w0:\n%v\n", w0)
-// 	// w1, _ := w.Slice(S(0), nil, S(0))
-// 	// fmt.Printf("w1:\n%v\n", w1)
-// 	fmt.Printf("w:\n%v\n", w)
-// 	// out := make([]float32, len(w))
-// 	fmt.Printf("b:\n%v\n", b)
-// 	fmt.Println(w.Shape())
-// 	for i := 0; i < w.Shape()[0]; i++ {
-// 		tempw, _ := w.Slice(S(i), nil)
-// 		fmt.Printf("tempw:\n%v\n", tempw)
-// 		tempm, _ := in.Mul(tempw.(*Dense))
-// 		fmt.Printf("tempw:\n%v\n", tempm)
-// 		temps, _ := tempm.Sum()
-// 		fmt.Printf("temps:\n%v\n", temps)
-// 		temp := float32(0)
-// 		tempsi, _ := temps.At(0)
-// 		temp += tempsi
-// 	}
-// 	// out := in
-// 	return w
-// }
+func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
+
+	var activ activation
+	switch act {
+	case "relu":
+		activ = relu
+	case "sigmoid":
+		activ = sigmoid
+	default:
+		activ = pass
+	}
+
+	out := Tensor{}
+	out.zero(w.shape[1])
+	fmt.Println(out)
+
+	for i := 0; i < w.shape[0]; i++ {
+		temp := float32(0.0)
+		for j := 0; j < w.shape[1]; j++ {
+
+			temp += w.at(i, j) * in.at(j)
+			fmt.Println(w.at(i, j), in.at(j), b.at(j), temp)
+
+		}
+		out.set(activ(temp+b.at(i)), i)
+	}
+	return out
+}
 
 func denseBP(w [][]float32, b []float32, err []float32, input []float32, output []float32, lr float32) []float32 {
 
