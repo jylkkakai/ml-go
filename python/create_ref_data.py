@@ -15,7 +15,7 @@ for i in range(0, 12):
     filename = "../data/test_at{}".format(i)
     np.save(filename + ".npy", arr)
     index = []
-    with open(filename + ".txt", "w") as file:
+    with open(filename + ".golden", "w") as file:
         for j in range(0, 10):
             index = []
             for k in range(0, len(shape)):

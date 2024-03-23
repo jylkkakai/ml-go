@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/kshedden/gonpy"
+	"log"
 )
 
 type Tensor struct {
@@ -31,11 +32,19 @@ func (t *Tensor) at(coord ...int) float32 {
 func (t *Tensor) readNpy(f string) {
 
 	r, err := gonpy.NewFileReader(f)
-	fmt.Println(err)
-	fmt.Printf("%T\n", r)
-	fmt.Println(r.Shape)
-	fmt.Println(r.Dtype)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// fmt.Println(err)
+	// fmt.Printf("%T\n", r)
+	// fmt.Println(r.Shape)
+	// fmt.Println(r.Dtype)
 	data, err1 := r.GetFloat32()
-	fmt.Println(err1)
-	fmt.Println(data)
+	if err1 != nil {
+		log.Println(err)
+	}
+	t.shape = r.Shape
+	t.arr = data
+	// fmt.Println(err1)
+	// fmt.Println(data)
 }

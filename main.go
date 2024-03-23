@@ -20,17 +20,9 @@ import (
 func main() {
 
 	t := Tensor{}
-
-	t.arr = []float32{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}
-	t.shape = []int{3, 2}
-
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 2; j++ {
-			fmt.Println(t.at(i, j))
-		}
-	}
-	t2 := Tensor{}
-	t2.readNpy("data/test_at0.npy")
+	t.readNpy("data/test_at9.npy")
+	fmt.Println(t.at(3, 4, 0, 1, 2))
+	fmt.Println(t.shape)
 	// t.at(0, 0)
 	// t.at(0, 1)
 	// t.at(1, 0)
