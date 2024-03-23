@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -31,7 +32,7 @@ func compare(t *testing.T, x, y float32) {
 		t.Errorf("Incorrect value, got: %f want: %f\n", x, y)
 	}
 }
-func TestAt1Dim(test *testing.T) {
+func TestAt(test *testing.T) {
 
 	for i := 0; i < 12; i++ {
 
@@ -83,12 +84,23 @@ func TestAt1Dim(test *testing.T) {
 		})
 
 	}
-	// tensor := Tensor{}
-	// tensor.readNpy("data/test_at0.npy")
-	// result := tensor.at(2)
-	// target := float32(0.4601571)
-	// if result != target {
-	// 	test.Errorf("Incorrect value, got: %f want: %f\n", result, target)
-	// }
+
+}
+
+func TestSet(test *testing.T) {
+
+	tensor := Tensor{}
+	tensor.zero(2, 3, 4, 5, 6)
+	for i := 0; i < 100; i++ {
+
+		value := rand.Float32()
+		j := rand.Intn(tensor.shape[0])
+		k := rand.Intn(tensor.shape[1])
+		l := rand.Intn(tensor.shape[2])
+		m := rand.Intn(tensor.shape[3])
+		n := rand.Intn(tensor.shape[4])
+		tensor.set(value, j, k, l, m, n)
+		compare(test, value, tensor.at(j, k, l, m, n))
+	}
 
 }
