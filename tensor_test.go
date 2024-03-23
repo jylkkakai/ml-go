@@ -36,7 +36,7 @@ func TestAt(test *testing.T) {
 
 	for i := 0; i < 12; i++ {
 
-		filename := fmt.Sprintf("data/test_at%d", i)
+		filename := fmt.Sprintf("test_data/test_at%d", i)
 
 		test.Run(filename, func(test *testing.T) {
 
