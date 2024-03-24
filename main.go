@@ -9,49 +9,47 @@ import (
 	"strings"
 )
 
-func main() {
+func simpleNet() {
 
 	w1 := Tensor{}
 	w1.readNpy("test_data/w1.npy")
-	w1.set(0.2, 0, 1)
-	w1.set(0.25, 1, 0)
-	fmt.Println(w1)
-	fmt.Println(w1.shape)
 	w2 := Tensor{}
 	w2.readNpy("test_data/w2.npy")
-	w2.set(0.45, 0, 1)
-	w2.set(0.5, 1, 0)
-	fmt.Println(w2)
-	fmt.Println(w2.shape)
 	b1 := Tensor{}
 	b1.readNpy("test_data/b1.npy")
-	fmt.Println(b1)
-	fmt.Println(b1.shape)
 	b2 := Tensor{}
 	b2.readNpy("test_data/b2.npy")
-	fmt.Println(b2)
-	fmt.Println(b2.shape)
 	in := Tensor{}
 	in.readNpy("test_data/in.npy")
-	fmt.Println(in)
-	fmt.Println(in.shape)
-	out := Tensor{}
-	out.readNpy("test_data/out.npy")
-	fmt.Println(out)
-	fmt.Println(out.shape)
-	// t.at(0, 0)
-	// t.at(0, 1)
-	// t.at(1, 0)
-	// t.at(1, 1)
-	// t.at(2, 0)
-	// t.at(2, 1)
-	// fmt.Println(in)
-	// fmt.Printf("in:\n%v\n", in)
-	// fmt.Printf("w:\n%v\n", w)
+	gout := Tensor{}
+	gout.readNpy("test_data/out.npy")
+	target := Tensor{
+		shape: []int{2},
+		arr:   []float32{0.01, 0.99},
+	}
+
 	dout1 := dense(in, w1, b1, "sigmoid")
-	fmt.Println(dout1)
 	dout2 := dense(dout1, w2, b2, "sigmoid")
 	fmt.Println(dout2)
+
+	outLoss := loss(dout2, target)
+	fmt.Println(outLoss)
+	totLoss := totalLoss(dout2, target)
+	fmt.Println(totLoss)
+	l2Loss := denseBP(w2, b2, outLoss, dout1, dout2, float32(0.5))
+	fmt.Println(w2)
+	fmt.Println(b2)
+	fmt.Println(l2Loss)
+	l1Loss := denseBP(w1, b1, l2Loss, in, dout1, float32(0.5))
+	fmt.Println(w1)
+	fmt.Println(b1)
+	fmt.Println(l1Loss)
+
+}
+
+func main() {
+
+	simpleNet()
 }
 
 func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
@@ -68,32 +66,31 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 
 	out := Tensor{}
 	out.zero(w.shape[1])
-	fmt.Println(out)
 
 	for i := 0; i < w.shape[0]; i++ {
 		temp := float32(0.0)
 		for j := 0; j < w.shape[1]; j++ {
-
-			temp += w.at(i, j) * in.at(j)
-			fmt.Println(w.at(i, j), in.at(j), b.at(j), temp)
-
+			temp += w.at(j, i) * in.at(j)
 		}
 		out.set(activ(temp+b.at(i)), i)
 	}
 	return out
 }
 
-func denseBP(w [][]float32, b []float32, err []float32, input []float32, output []float32, lr float32) []float32 {
+func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr float32) Tensor {
 
-	errout := make([]float32, len(input))
-	for i := range w {
-		delta := err[i] * sigmoidDer(output[i])
-		for j := range w[i] {
-			errout[j] += delta * w[i][j]
-			w[i][j] = w[i][j] - lr*delta*input[j]
+	errout := Tensor{}
+	errout.zero(output.shape[0])
+	for i := 0; i < w.shape[0]; i++ {
+		delta := err.at(i) * sigmoidDer(output.at(i))
+		for j := 0; j < w.shape[1]; j++ {
+			errout.add(delta*w.at(j, i), j)
+			w.sub(lr*delta*input.at(j), j, i)
+			// w[i][j] = w[i][j] - lr*delta*input[j]
 
 		}
-		b[i] = b[i] - lr*delta*1
+		b.sub(lr*delta*1, i)
+		// b[i] = b[i] - lr*delta*1
 	}
 	return errout
 }
@@ -125,22 +122,33 @@ func denseBP(w [][]float32, b []float32, err []float32, input []float32, output 
 // 	fmt.Println(bias1)
 // }
 
-func loss(arr []float32, target []float32) []float32 {
-	resArr := make([]float32, len(arr))
-	for i := range arr {
-		temp := target[i] - arr[i]
-		resArr[i] = -temp
+func loss(arr Tensor, target Tensor) Tensor {
+	resArr := Tensor{}
+	resArr.zero(arr.shape[0])
+	for i := 0; i < arr.shape[0]; i++ {
+		temp := target.at(i) - arr.at(i)
+		resArr.set(-temp, i)
 	}
 	return resArr
 }
 
-func sumArr(arr []float32) float32 {
-	result := float32(0.0)
-	for i := range arr {
-		result += arr[i]
+func totalLoss(arr Tensor, target Tensor) float32 {
+	result := float32(0)
+	for i := 0; i < arr.shape[0]; i++ {
+		temp := (target.at(i) - arr.at(i))
+		result += 0.5 * temp * temp
+		// resArr.set(-temp, i)
 	}
 	return result
 }
+
+// func sumArr(arr Tensor) float32 {
+// 	result := float32(0.0)
+// 	for i := 0; i < arr.shape[0]; i++ {
+// 		result += arr[i]
+// 	}
+// 	return result
+// }
 
 // func conv2d(in, wgt tensor, relu, padding bool) tensor {
 //
