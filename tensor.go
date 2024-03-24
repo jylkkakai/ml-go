@@ -37,6 +37,10 @@ func (t *Tensor) add(x float32, coord ...int) {
 	t.arr[t.getIndex(coord)] += x
 }
 
+func (t *Tensor) sub(x float32, coord ...int) {
+	t.arr[t.getIndex(coord)] -= x
+}
+
 func (t *Tensor) readNpy(f string) {
 
 	r, err := gonpy.NewFileReader(f)
