@@ -67,9 +67,9 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 	out := Tensor{}
 	out.zero(w.shape[1])
 
-	for i := 0; i < w.shape[0]; i++ {
+	for i := 0; i < w.shape[1]; i++ {
 		temp := float32(0.0)
-		for j := 0; j < w.shape[1]; j++ {
+		for j := 0; j < w.shape[0]; j++ {
 			temp += w.at(j, i) * in.at(j)
 		}
 		out.set(activ(temp+b.at(i)), i)
@@ -81,9 +81,9 @@ func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr flo
 
 	errout := Tensor{}
 	errout.zero(output.shape[0])
-	for i := 0; i < w.shape[0]; i++ {
+	for i := 0; i < w.shape[1]; i++ {
 		delta := err.at(i) * sigmoidDer(output.at(i))
-		for j := 0; j < w.shape[1]; j++ {
+		for j := 0; j < w.shape[0]; j++ {
 			errout.add(delta*w.at(j, i), j)
 			w.sub(lr*delta*input.at(j), j, i)
 			// w[i][j] = w[i][j] - lr*delta*input[j]

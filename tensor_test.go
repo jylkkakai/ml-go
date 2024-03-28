@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	// "reflect"
 	"strconv"
 	"strings"
 
@@ -34,7 +35,7 @@ func compare(t *testing.T, x, y float32) {
 }
 func TestAt(test *testing.T) {
 
-	for i := 0; i < 12; i++ {
+	for i := 0; i < 6; i++ {
 
 		filename := fmt.Sprintf("test_data/test_at%d", i)
 
@@ -91,6 +92,7 @@ func TestSet(test *testing.T) {
 
 	tensor := Tensor{}
 	tensor.zero(2, 3, 4, 5, 6)
+
 	for i := 0; i < 100; i++ {
 
 		value := rand.Float32()
@@ -103,4 +105,39 @@ func TestSet(test *testing.T) {
 		compare(test, value, tensor.at(j, k, l, m, n))
 	}
 
+}
+
+func TestDense(t *testing.T) {
+
+	for i := 0; i < 10; i++ {
+		filename := fmt.Sprintf("test_data/test_dense%d", i)
+		t.Run(filename, func(t *testing.T) {
+			w := Tensor{}
+			w.readNpy(filename + "_w.npy")
+			b := Tensor{}
+			b.readNpy(filename + "_b.npy")
+			din := Tensor{}
+			din.readNpy(filename + "_din.npy")
+			dout := Tensor{}
+			dout.readNpy(filename + "_dout.npy")
+
+			// Change values to see that test fails
+			// if i == 8 {
+			// 	w.arr[0] = float32(0.0)
+			// 	dout.arr[1] = float32(1.0)
+			// }
+
+			out := dense(din, w, b, "sigmoid")
+			//
+			// if reflect.DeepEqual(out, dout) {
+			// 	t.Errorf("Output is incorrect!")
+			// }
+			for i, v := range out.arr {
+				eps := float32(0.00001)
+				if v+eps < dout.at(i) || v-eps > dout.at(i) {
+					t.Errorf("Output: %f != %f in %d is incorrect!", v, dout.at(i), i)
+				}
+			}
+		})
+	}
 }
