@@ -80,18 +80,30 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr float32) Tensor {
 
 	errout := Tensor{}
-	errout.zero(output.shape[0])
+	// fmt.Println("in", input.shape)
+	errout.zero(input.shape[0])
+	// fmt.Println("errout", errout.shape)
 	for i := 0; i < w.shape[1]; i++ {
+		// fmt.Println("err", err.shape)
+		// fmt.Println("w", w.shape)
+		// fmt.Println(i)
 		delta := err.at(i) * sigmoidDer(output.at(i))
+		fmt.Println("delta:", delta)
+		// delta := float32(0.0)
 		for j := 0; j < w.shape[0]; j++ {
+			// delta := err.at(j) * sigmoidDer(output.at(j))
 			errout.add(delta*w.at(j, i), j)
+			// fmt.Println("errout:", errout)
+			fmt.Println(w.at(j, i), "-", lr*delta*input.at(j))
 			w.sub(lr*delta*input.at(j), j, i)
+			fmt.Println("w at", j, i, w.at(j, i))
 			// w[i][j] = w[i][j] - lr*delta*input[j]
 
 		}
 		b.sub(lr*delta*1, i)
 		// b[i] = b[i] - lr*delta*1
 	}
+	// fmt.Println("errout", errout)
 	return errout
 }
 
@@ -126,20 +138,22 @@ func loss(arr Tensor, target Tensor) Tensor {
 	resArr := Tensor{}
 	resArr.zero(arr.shape[0])
 	for i := 0; i < arr.shape[0]; i++ {
-		temp := target.at(i) - arr.at(i)
-		resArr.set(-temp, i)
+		temp := float32(2) / float32(arr.shape[0]) * (arr.at(i) - target.at(i))
+		resArr.set(temp, i)
 	}
 	return resArr
 }
 
 func totalLoss(arr Tensor, target Tensor) float32 {
 	result := float32(0)
+	fmt.Println(arr.shape)
 	for i := 0; i < arr.shape[0]; i++ {
 		temp := (target.at(i) - arr.at(i))
-		result += 0.5 * temp * temp
+		result += temp * temp
+		fmt.Println(result)
 		// resArr.set(-temp, i)
 	}
-	return result
+	return result / float32(arr.shape[0])
 }
 
 // func sumArr(arr Tensor) float32 {
