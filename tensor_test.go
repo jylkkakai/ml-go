@@ -200,20 +200,9 @@ func TestDenseBP(t *testing.T) {
 	lout3 := dense(lout2, w3, b3, "sigmoid")
 	lout4 := dense(lout3, w4, b4, "sigmoid")
 
-	// fmt.Println("lout0:", lout0)
-	// fmt.Println("lout1:", lout1)
-	// fmt.Println("lout2", lout2)
-	// fmt.Println("lout3:", lout3)
-	// fmt.Println("lout4:", lout4)
-	// fmt.Println("dout:", dout)
 	target.shape = target.shape[1:2]
-	// fmt.Println(target)
 	outLoss := loss(lout4, target)
-	fmt.Println("outloss:", outLoss)
 	totLoss := totalLoss(lout4, target)
-	// fmt.Println(totLoss)
-	// fmt.Println(gloss)
-	fmt.Println(w4)
 	l4loss := denseBP(w4, b4, outLoss, lout3, lout4, float32(0.5))
 	// fmt.Println(b2)
 	// fmt.Println(l4loss)
@@ -246,7 +235,7 @@ func TestDenseBP(t *testing.T) {
 			t.Errorf("Output: %f != %f is incorrect!", totLoss-eps, gloss.at(0, 0))
 		}
 	})
-	fmt.Println(w4.shape)
+	// fmt.Println(w4.shape)
 	t.Run("Compare w4", func(t *testing.T) {
 		compareTensor(t, w4, fw4)
 	})
@@ -289,15 +278,8 @@ func TestDenseBP(t *testing.T) {
 func compareTensor(t *testing.T, x, y Tensor) {
 	eps := float32(0.00001)
 	for i := 0; i < len(x.arr); i++ {
-		// fmt.Printf("Output: %f != %f \tin %d, %d is incorrect!\n", w4.at(i, j), fw4.at(i, j), i, j)
 		if x.arr[i]+eps < y.arr[i] || x.arr[i]-eps > y.arr[i] {
 			t.Errorf("Output: %f != %f \tin %d is incorrect!", x.arr[i], y.arr[i], i)
 		}
-		// for j := 0; j < x.shape[1]; j++ {
-		// 	// fmt.Printf("Output: %f != %f \tin %d, %d is incorrect!\n", w4.at(i, j), fw4.at(i, j), i, j)
-		// 	if x.at(i, j)+eps < y.at(i, j) || x.at(i, j)-eps > y.at(i, j) {
-		// 		t.Errorf("Output: %f != %f \tin %d, %d is incorrect!", x.at(i, j), y.at(i, j), i, j)
-		// 	}
-		// }
 	}
 }
