@@ -2,53 +2,90 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
-
-func simpleNet() {
-
-	w1 := Tensor{}
-	w1.readNpy("test_data/w1.npy")
-	w2 := Tensor{}
-	w2.readNpy("test_data/w2.npy")
-	b1 := Tensor{}
-	b1.readNpy("test_data/b1.npy")
-	b2 := Tensor{}
-	b2.readNpy("test_data/b2.npy")
-	in := Tensor{}
-	in.readNpy("test_data/in.npy")
-	gout := Tensor{}
-	gout.readNpy("test_data/out.npy")
-	target := Tensor{
-		shape: []int{2},
-		arr:   []float32{0.01, 0.99},
-	}
-
-	dout1 := dense(in, w1, b1, "sigmoid")
-	dout2 := dense(dout1, w2, b2, "sigmoid")
-	fmt.Println(dout2)
-
-	outLoss := loss(dout2, target)
-	fmt.Println(outLoss)
-	totLoss := totalLoss(dout2, target)
-	fmt.Println(totLoss)
-	l2Loss := denseBP(w2, b2, outLoss, dout1, dout2, float32(0.5))
-	fmt.Println(w2)
-	fmt.Println(b2)
-	fmt.Println(l2Loss)
-	l1Loss := denseBP(w1, b1, l2Loss, in, dout1, float32(0.5))
-	fmt.Println(w1)
-	fmt.Println(b1)
-	fmt.Println(l1Loss)
-
-}
 
 func main() {
 
-	simpleNet()
+	// simpleNet()
+	// testTraining()
+	mnist()
+}
+
+func mnist() {
+
+	// epochs := 100
+	// batchSize := 1
+	xtrain := Tensor{}
+	xtrain.readNpy("test_data/mnist_x_train.npy")
+	fmt.Println(xtrain.shape)
+	ytrain := Tensor{}
+	ytrain.readNpy("test_data/mnist_y_train.npy")
+	fmt.Println(ytrain.shape)
+	xtest := Tensor{}
+	xtest.readNpy("test_data/mnist_x_test.npy")
+	fmt.Println(xtest.shape)
+	ytest := Tensor{}
+	ytest.readNpy("test_data/mnist_y_test.npy")
+	fmt.Println(ytest.shape)
+
+	img := xtrain.slice(1)
+	img.print()
+	img = xtrain.slice(100)
+	img.print()
+	img = xtrain.slice(1000)
+	img.print()
+	img = xtrain.slice(12345)
+	img.print()
+	test := Tensor{}
+	test.random(3, 4)
+	test.print()
+	// nimg := normalize(img)
+	// nimg.print()
+	// w0 := Tensor{}
+	// w0.readNpy("test_data/test_denseBP_w0.npy")
+	// w1 := Tensor{}
+	// w1.readNpy("test_data/test_denseBP_w1.npy")
+	// w2 := Tensor{}
+	// w2.readNpy("test_data/test_denseBP_w2.npy")
+	// totStart := time.Now()
+	// finalLoss := float32(0.0)
+	// for epoch := 0; epoch < epochs; epoch++ {
+	// 	for batch := 0; batch < batchSize; batch++ {
+	//
+	// 		start := time.Now()
+	// 		lout0 := dense(din, w0, b0, "sigmoid")
+	// 		lout1 := dense(lout0, w1, b1, "sigmoid")
+	// 		lout2 := dense(lout1, w2, b2, "sigmoid")
+	// 		lout3 := dense(lout2, w3, b3, "sigmoid")
+	// 		lout4 := dense(lout3, w4, b4, "sigmoid")
+	//
+	// 		outLoss := loss(lout4, target)
+	// 		totLoss := totalLoss(lout4, target)
+	// 		l4loss := denseBP(w4, b4, outLoss, lout3, lout4, float32(0.5))
+	// 		// fmt.Println(b2)
+	// 		// fmt.Println(l4loss)
+	// 		// fmt.Println(lout3)
+	// 		l3loss := denseBP(w3, b3, l4loss, lout2, lout3, float32(0.5))
+	// 		l2loss := denseBP(w2, b2, l3loss, lout1, lout2, float32(0.5))
+	// 		l1loss := denseBP(w1, b1, l2loss, lout0, lout1, float32(0.5))
+	// 		_ = denseBP(w0, b0, l1loss, din, lout0, float32(0.5))
+	// 		t := time.Now()
+	// 		elapsed := t.Sub(start)
+	//
+	// 		fmt.Printf("Epoch: %d \tElapsed time: %v \tTotal loss: %f\n", epoch+1, elapsed, totLoss)
+	// 		finalLoss = totLoss
+	// 	}
+	// }
+	// totElapsed := time.Since(totStart)
+	// fmt.Printf("Total training time: %v \tFinal loss: %f\n", totElapsed, finalLoss)
+
 }
 
 func testTraining() {
 
+	epochs := 100
+	batchSize := 1
 	w0 := Tensor{}
 	w0.readNpy("test_data/test_denseBP_w0.npy")
 	w1 := Tensor{}
@@ -98,23 +135,76 @@ func testTraining() {
 	dout.readNpy("test_data/test_denseBP_dout.npy")
 	target := Tensor{}
 	target.readNpy("test_data/test_denseBP_target.npy")
-
-	lout0 := dense(din, w0, b0, "sigmoid")
-	lout1 := dense(lout0, w1, b1, "sigmoid")
-	lout2 := dense(lout1, w2, b2, "sigmoid")
-	lout3 := dense(lout2, w3, b3, "sigmoid")
-	lout4 := dense(lout3, w4, b4, "sigmoid")
-
 	target.shape = target.shape[1:2]
-	outLoss := loss(lout4, target)
-	totLoss := totalLoss(lout4, target)
-	l4loss := denseBP(w4, b4, outLoss, lout3, lout4, float32(0.5))
-	// fmt.Println(b2)
-	// fmt.Println(l4loss)
-	// fmt.Println(lout3)
-	l3loss := denseBP(w3, b3, l4loss, lout2, lout3, float32(0.5))
-	l2loss := denseBP(w2, b2, l3loss, lout1, lout2, float32(0.5))
-	l1loss := denseBP(w1, b1, l2loss, lout0, lout1, float32(0.5))
-	l0loss := denseBP(w0, b0, l1loss, din, lout0, float32(0.5))
-	_ = l0loss
+
+	totStart := time.Now()
+	finalLoss := float32(0.0)
+	for epoch := 0; epoch < epochs; epoch++ {
+		for batch := 0; batch < batchSize; batch++ {
+
+			start := time.Now()
+			lout0 := dense(din, w0, b0, "sigmoid")
+			lout1 := dense(lout0, w1, b1, "sigmoid")
+			lout2 := dense(lout1, w2, b2, "sigmoid")
+			lout3 := dense(lout2, w3, b3, "sigmoid")
+			lout4 := dense(lout3, w4, b4, "sigmoid")
+
+			outLoss := loss(lout4, target)
+			totLoss := totalLoss(lout4, target)
+			l4loss := denseBP(w4, b4, outLoss, lout3, lout4, float32(0.5))
+			// fmt.Println(b2)
+			// fmt.Println(l4loss)
+			// fmt.Println(lout3)
+			l3loss := denseBP(w3, b3, l4loss, lout2, lout3, float32(0.5))
+			l2loss := denseBP(w2, b2, l3loss, lout1, lout2, float32(0.5))
+			l1loss := denseBP(w1, b1, l2loss, lout0, lout1, float32(0.5))
+			_ = denseBP(w0, b0, l1loss, din, lout0, float32(0.5))
+			t := time.Now()
+			elapsed := t.Sub(start)
+
+			fmt.Printf("Epoch: %d \tElapsed time: %v \tTotal loss: %f\n", epoch+1, elapsed, totLoss)
+			finalLoss = totLoss
+		}
+	}
+	totElapsed := time.Since(totStart)
+	fmt.Printf("Total training time: %v \tFinal loss: %f\n", totElapsed, finalLoss)
+
+}
+
+func simpleNet() {
+
+	w1 := Tensor{}
+	w1.readNpy("test_data/w1.npy")
+	w2 := Tensor{}
+	w2.readNpy("test_data/w2.npy")
+	b1 := Tensor{}
+	b1.readNpy("test_data/b1.npy")
+	b2 := Tensor{}
+	b2.readNpy("test_data/b2.npy")
+	in := Tensor{}
+	in.readNpy("test_data/in.npy")
+	gout := Tensor{}
+	gout.readNpy("test_data/out.npy")
+	target := Tensor{
+		shape: []int{2},
+		arr:   []float32{0.01, 0.99},
+	}
+
+	dout1 := dense(in, w1, b1, "sigmoid")
+	dout2 := dense(dout1, w2, b2, "sigmoid")
+	fmt.Println(dout2)
+
+	outLoss := loss(dout2, target)
+	fmt.Println(outLoss)
+	totLoss := totalLoss(dout2, target)
+	fmt.Println(totLoss)
+	l2Loss := denseBP(w2, b2, outLoss, dout1, dout2, float32(0.5))
+	fmt.Println(w2)
+	fmt.Println(b2)
+	fmt.Println(l2Loss)
+	l1Loss := denseBP(w1, b1, l2Loss, in, dout1, float32(0.5))
+	fmt.Println(w1)
+	fmt.Println(b1)
+	fmt.Println(l1Loss)
+
 }

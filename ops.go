@@ -2,8 +2,8 @@ package main
 
 import (
 	// "fmt"
+	"log"
 	"math"
-	// "log"
 	// "os"
 	// "strconv"
 	// "strings"
@@ -109,6 +109,22 @@ func totalLoss(arr Tensor, target Tensor) float32 {
 		// resArr.set(-temp, i)
 	}
 	return result / float32(arr.shape[0])
+}
+
+func normalize(t Tensor) Tensor {
+
+	ret := Tensor{}
+	if len(t.shape) == 2 {
+		ret.zero(t.shape[0], t.shape[1])
+	} else if len(t.shape) == 3 {
+		ret.zero(t.shape[0], t.shape[1], t.shape[2])
+	} else {
+		log.Fatalln("Only 2D or 3D tensors can be normalized.")
+	}
+	for i := 0; i < len(t.arr); i++ {
+		ret.arr[i] = (t.arr[i] - float32(128)) / float32(128)
+	}
+	return ret
 }
 
 // func sumArr(arr Tensor) float32 {
