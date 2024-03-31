@@ -34,8 +34,17 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 	return out
 }
 
-func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr float32) Tensor {
+func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr float32, act string) Tensor {
 
+	var activ activation
+	switch act {
+	case "relu":
+		activ = reluDer
+	case "sigmoid":
+		activ = sigmoidDer
+	default:
+		activ = pass
+	}
 	errout := Tensor{}
 	// fmt.Println("in", input.shape)
 	errout.zero(input.shape[0])
@@ -44,7 +53,7 @@ func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr flo
 		// fmt.Println("err", err.shape)
 		// fmt.Println("w", w.shape)
 		// fmt.Println(i)
-		delta := err.at(i) * sigmoidDer(output.at(i))
+		delta := err.at(i) * activ(output.at(i))
 		// fmt.Println("delta:", delta)
 		// delta := float32(0.0)
 		for j := 0; j < w.shape[0]; j++ {
@@ -62,6 +71,34 @@ func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr flo
 	}
 	// fmt.Println("errout", errout)
 	return errout
+}
+
+// 1D Tensor
+func softmax(t Tensor) Tensor {
+
+	ret := Tensor{}
+	ret.zero(t.shape[0])
+	// sum := t.sum()
+	sum := float32(0)
+	max := t.at(t.argmax())
+
+	xval := Tensor{}
+	xval.zero(t.shape[0])
+	for i := 0; i < len(t.arr); i++ {
+		xval.set(t.arr[i]-max, i)
+	}
+
+	// fmt.Println("xval:", xval)
+	for i := 0; i < len(t.arr); i++ {
+		sum += float32(math.Exp(float64(xval.arr[i])))
+	}
+	// fmt.Println("sum:", sum)
+	for i := 0; i < t.shape[0]; i++ {
+		temp := math.Exp(float64(xval.at(i)))
+		// fmt.Println("exp:", float32(math.Exp(float64(t.at(i)))))
+		ret.set(float32(temp)/sum, i)
+	}
+	return ret
 }
 
 // func train() {
@@ -95,6 +132,7 @@ func loss(arr Tensor, target Tensor) Tensor {
 	resArr := Tensor{}
 	resArr.zero(arr.shape[0])
 	for i := 0; i < arr.shape[0]; i++ {
+		// temp := (arr.at(i) - target.at(i))
 		temp := float32(2) / float32(arr.shape[0]) * (arr.at(i) - target.at(i))
 		resArr.set(temp, i)
 	}
@@ -163,6 +201,13 @@ func sigmoidDer(x float32) float32 {
 	return x * (1 - x)
 }
 
+func reluDer(x float32) float32 {
+	if x <= 0 {
+		return 0
+	} else {
+		return 1
+	}
+}
 func activate(x, b float32, fn activation) float32 {
 	raw := x + b
 	return fn(raw)

@@ -68,6 +68,11 @@ func (t *Tensor) sub(x float32, coord ...int) {
 	t.arr[t.getIndex(coord)] -= x
 }
 
+func (t *Tensor) flatten() {
+	t.shape[0] = t.shape[0] * t.shape[1]
+	t.shape = t.shape[0:1]
+}
+
 // For now only slices mnist data [28, 28]
 func (t *Tensor) slice(x int) Tensor {
 	w := t.shape[1]
@@ -109,12 +114,33 @@ func (t *Tensor) random(s ...int) {
 	t.shape = s
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < len; i++ {
-		t.arr[i] = r.Float32()*2 - 1
+		t.arr[i] = (r.Float32()*2 - 1) / float32(100)
 	}
 }
 
-func (t *Tensor) shuffle(s ...int) {
+func (t *Tensor) sum() float32 {
+
+	sum := float32(0)
+	for i := 0; i < len(t.arr); i++ {
+
+		sum += t.arr[i]
+	}
+	return sum
+}
+
+func (t *Tensor) shuffle() {
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	r.Shuffle(len(t.arr), func(i, j int) { t.arr[i], t.arr[j] = t.arr[j], t.arr[i] })
+}
+
+func (t *Tensor) argmax() int {
+
+	max := 0
+	for i := 1; i < len(t.arr); i++ {
+		if t.arr[max] < t.arr[i] {
+			max = i
+		}
+	}
+	return max
 }

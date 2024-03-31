@@ -14,72 +14,140 @@ func main() {
 
 func mnist() {
 
-	// epochs := 100
-	// batchSize := 1
-	xtrain := Tensor{}
-	xtrain.readNpy("test_data/mnist_x_train.npy")
-	fmt.Println(xtrain.shape)
+	epochs := 10
+	batchSize := 1000
+	lr := float32(0.001)
+	xtrainRGB := Tensor{}
+	xtrainRGB.readNpy("test_data/mnist_x_train.npy")
+	xtrain := normalize(xtrainRGB)
 	ytrain := Tensor{}
 	ytrain.readNpy("test_data/mnist_y_train.npy")
-	fmt.Println(ytrain.shape)
-	xtest := Tensor{}
-	xtest.readNpy("test_data/mnist_x_test.npy")
-	fmt.Println(xtest.shape)
+	xtestRGB := Tensor{}
+	xtestRGB.readNpy("test_data/mnist_x_test.npy")
+	xtest := normalize(xtestRGB)
 	ytest := Tensor{}
 	ytest.readNpy("test_data/mnist_y_test.npy")
-	fmt.Println(ytest.shape)
+	target := Tensor{}
+	din := Tensor{}
+	numOfCor := 0
+	cumLoss := float32(0)
+	totLoss := float32(0)
 
-	img := xtrain.slice(1)
-	img.print()
-	img = xtrain.slice(100)
-	img.print()
-	img = xtrain.slice(1000)
-	img.print()
-	img = xtrain.slice(12345)
-	img.print()
-	test := Tensor{}
-	test.random(3, 4)
-	test.print()
-	// nimg := normalize(img)
-	// nimg.print()
-	// w0 := Tensor{}
-	// w0.readNpy("test_data/test_denseBP_w0.npy")
-	// w1 := Tensor{}
-	// w1.readNpy("test_data/test_denseBP_w1.npy")
-	// w2 := Tensor{}
-	// w2.readNpy("test_data/test_denseBP_w2.npy")
-	// totStart := time.Now()
-	// finalLoss := float32(0.0)
-	// for epoch := 0; epoch < epochs; epoch++ {
-	// 	for batch := 0; batch < batchSize; batch++ {
-	//
-	// 		start := time.Now()
-	// 		lout0 := dense(din, w0, b0, "sigmoid")
-	// 		lout1 := dense(lout0, w1, b1, "sigmoid")
-	// 		lout2 := dense(lout1, w2, b2, "sigmoid")
-	// 		lout3 := dense(lout2, w3, b3, "sigmoid")
-	// 		lout4 := dense(lout3, w4, b4, "sigmoid")
-	//
-	// 		outLoss := loss(lout4, target)
-	// 		totLoss := totalLoss(lout4, target)
-	// 		l4loss := denseBP(w4, b4, outLoss, lout3, lout4, float32(0.5))
-	// 		// fmt.Println(b2)
-	// 		// fmt.Println(l4loss)
-	// 		// fmt.Println(lout3)
-	// 		l3loss := denseBP(w3, b3, l4loss, lout2, lout3, float32(0.5))
-	// 		l2loss := denseBP(w2, b2, l3loss, lout1, lout2, float32(0.5))
-	// 		l1loss := denseBP(w1, b1, l2loss, lout0, lout1, float32(0.5))
-	// 		_ = denseBP(w0, b0, l1loss, din, lout0, float32(0.5))
-	// 		t := time.Now()
-	// 		elapsed := t.Sub(start)
-	//
-	// 		fmt.Printf("Epoch: %d \tElapsed time: %v \tTotal loss: %f\n", epoch+1, elapsed, totLoss)
-	// 		finalLoss = totLoss
-	// 	}
-	// }
-	// totElapsed := time.Since(totStart)
-	// fmt.Printf("Total training time: %v \tFinal loss: %f\n", totElapsed, finalLoss)
+	// img := xtrainRGB.slice(1)
+	// img.print()
+	// img = xtrainRGB.slice(100)
+	// img.print()
+	// img = xtrainRGB.slice(1000)
+	// img.print()
+	// img = xtrainRGB.slice(12345)
+	// img.print()
 
+	w0 := Tensor{}
+	w0.random(28*28, 128)
+	b0 := Tensor{}
+	b0.zero(128)
+	w1 := Tensor{}
+	w1.random(128, 10)
+	b1 := Tensor{}
+	b1.zero(10)
+
+	idx := Tensor{}
+	idx.zero(ytrain.shape[0])
+	for i := 0; i < idx.shape[0]; i++ {
+		idx.set(float32(i), i)
+	}
+
+	totStart := time.Now()
+	for epoch := 0; epoch < epochs; epoch++ {
+
+		fmt.Println("---------------------")
+		fmt.Println("Training...")
+		idx.shuffle()
+		start := time.Now()
+		for i := 0; i < ytrain.shape[0]; i++ { // ytrain.shape[0]
+
+			din = xtrain.slice(int(idx.at(i)))
+			din.flatten()
+			lout0 := dense(din, w0, b0, "relu")
+			lout1 := dense(lout0, w1, b1, "")
+			sfout := softmax(lout1)
+
+			target.zero(10)
+			target.set(float32(1), int(ytrain.at(int(idx.at(i)))))
+			outLoss := loss(sfout, target)
+			totLoss = totalLoss(sfout, target)
+			cumLoss += totLoss
+			maxArg := lout1.argmax()
+			if maxArg == int(ytrain.at(int(idx.at(i)))) {
+				numOfCor += 1
+			}
+
+			l1loss := denseBP(w1, b1, outLoss, lout0, sfout, lr, "relu")
+			_ = denseBP(w0, b0, l1loss, din, lout0, lr, "")
+
+			if (i+1)%batchSize == 0 {
+				t := time.Now()
+				elapsed := t.Sub(start)
+				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t hits: %d\n", epoch+1, i+1, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize), numOfCor)
+				start = time.Now()
+
+				numOfCor = 0
+				cumLoss = float32(0)
+
+			}
+		}
+		start = time.Now()
+		fmt.Println("---------------------")
+		fmt.Println("Running validation...")
+		for i := 0; i < ytest.shape[0]; i++ { // ytrain.shape[0]
+
+			din = xtest.slice(i)
+			din.flatten()
+			lout0 := dense(din, w0, b0, "relu")
+			lout1 := dense(lout0, w1, b1, "")
+			sfout := softmax(lout1)
+
+			target.zero(10)
+			target.set(float32(1), int(ytest.at(i)))
+			totLoss = totalLoss(sfout, target)
+			cumLoss += totLoss
+			maxArg := lout1.argmax()
+
+			if maxArg == int(ytest.at(i)) {
+				numOfCor += 1
+			}
+
+			if (i+1)%ytest.shape[0] == 0 {
+				t := time.Now()
+				elapsed := t.Sub(start)
+				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t hits: %d\n", epoch+1, i+1, ytest.shape[0], elapsed, cumLoss/float32(ytest.shape[0]), float32(numOfCor)/float32(ytest.shape[0]), numOfCor)
+				// finalLoss = totLoss
+				start = time.Now()
+
+				numOfCor = 0
+				cumLoss = float32(0)
+
+			}
+		}
+		// lr = lr * float32(0.5)
+	}
+	totElapsed := time.Since(totStart)
+	fmt.Printf("Total training time: %v \n", totElapsed)
+
+	for i := 0; i < 10; i++ {
+		din = xtrain.slice(int(idx.at(i)))
+		// din = xtrain.slice(int(idx.at(i)))
+		din.flatten()
+		lout0 := dense(din, w0, b0, "relu")
+		lout1 := dense(lout0, w1, b1, "")
+		sfout := softmax(lout1)
+
+		cumLoss += totLoss
+		maxArg := sfout.argmax()
+		img := xtrainRGB.slice(int(idx.at(i)))
+		img.print()
+		fmt.Println("Prediction:", maxArg)
+	}
 }
 
 func testTraining() {
@@ -151,14 +219,14 @@ func testTraining() {
 
 			outLoss := loss(lout4, target)
 			totLoss := totalLoss(lout4, target)
-			l4loss := denseBP(w4, b4, outLoss, lout3, lout4, float32(0.5))
+			l4loss := denseBP(w4, b4, outLoss, lout3, lout4, float32(0.5), "sigmoid")
 			// fmt.Println(b2)
 			// fmt.Println(l4loss)
 			// fmt.Println(lout3)
-			l3loss := denseBP(w3, b3, l4loss, lout2, lout3, float32(0.5))
-			l2loss := denseBP(w2, b2, l3loss, lout1, lout2, float32(0.5))
-			l1loss := denseBP(w1, b1, l2loss, lout0, lout1, float32(0.5))
-			_ = denseBP(w0, b0, l1loss, din, lout0, float32(0.5))
+			l3loss := denseBP(w3, b3, l4loss, lout2, lout3, float32(0.5), "sigmoid")
+			l2loss := denseBP(w2, b2, l3loss, lout1, lout2, float32(0.5), "sigmoid")
+			l1loss := denseBP(w1, b1, l2loss, lout0, lout1, float32(0.5), "sigmoid")
+			_ = denseBP(w0, b0, l1loss, din, lout0, float32(0.5), "sigmoid")
 			t := time.Now()
 			elapsed := t.Sub(start)
 
@@ -198,11 +266,11 @@ func simpleNet() {
 	fmt.Println(outLoss)
 	totLoss := totalLoss(dout2, target)
 	fmt.Println(totLoss)
-	l2Loss := denseBP(w2, b2, outLoss, dout1, dout2, float32(0.5))
+	l2Loss := denseBP(w2, b2, outLoss, dout1, dout2, float32(0.5), "sigmoid")
 	fmt.Println(w2)
 	fmt.Println(b2)
 	fmt.Println(l2Loss)
-	l1Loss := denseBP(w1, b1, l2Loss, in, dout1, float32(0.5))
+	l1Loss := denseBP(w1, b1, l2Loss, in, dout1, float32(0.5), "sigmoid")
 	fmt.Println(w1)
 	fmt.Println(b1)
 	fmt.Println(l1Loss)
