@@ -14,8 +14,9 @@ func main() {
 
 func mnist() {
 
+	fmt.Println("Single thread, slices, all training data shuffled.")
 	epochs := 10
-	batchSize := 1000
+	batchSize := 10000
 	lr := float32(0.001)
 	xtrainRGB := Tensor{}
 	xtrainRGB.readNpy("test_data/mnist_x_train.npy")
@@ -33,15 +34,6 @@ func mnist() {
 	cumLoss := float32(0)
 	totLoss := float32(0)
 
-	// img := xtrainRGB.slice(1)
-	// img.print()
-	// img = xtrainRGB.slice(100)
-	// img.print()
-	// img = xtrainRGB.slice(1000)
-	// img.print()
-	// img = xtrainRGB.slice(12345)
-	// img.print()
-
 	w0 := Tensor{}
 	w0.random(28*28, 128)
 	b0 := Tensor{}
@@ -51,34 +43,29 @@ func mnist() {
 	b1 := Tensor{}
 	b1.zero(10)
 
-	idx := Tensor{}
-	idx.zero(ytrain.shape[0])
-	for i := 0; i < idx.shape[0]; i++ {
-		idx.set(float32(i), i)
-	}
-
 	totStart := time.Now()
 	for epoch := 0; epoch < epochs; epoch++ {
 
+		shuffleTrainingData(xtrain, ytrain)
+		epochStart := time.Now()
 		fmt.Println("---------------------")
 		fmt.Println("Training...")
-		idx.shuffle()
 		start := time.Now()
 		for i := 0; i < ytrain.shape[0]; i++ { // ytrain.shape[0]
 
-			din = xtrain.slice(int(idx.at(i)))
+			din = xtrain.slice(i)
 			din.flatten()
 			lout0 := dense(din, w0, b0, "relu")
 			lout1 := dense(lout0, w1, b1, "")
 			sfout := softmax(lout1)
 
 			target.zero(10)
-			target.set(float32(1), int(ytrain.at(int(idx.at(i)))))
+			target.set(float32(1), int(ytrain.at(i)))
 			outLoss := loss(sfout, target)
 			totLoss = totalLoss(sfout, target)
 			cumLoss += totLoss
 			maxArg := lout1.argmax()
-			if maxArg == int(ytrain.at(int(idx.at(i)))) {
+			if maxArg == int(ytrain.at(i)) {
 				numOfCor += 1
 			}
 
@@ -90,12 +77,13 @@ func mnist() {
 				elapsed := t.Sub(start)
 				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t hits: %d\n", epoch+1, i+1, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize), numOfCor)
 				start = time.Now()
-
 				numOfCor = 0
 				cumLoss = float32(0)
 
 			}
 		}
+		t := time.Now()
+		fmt.Printf("Epoch elapsed time: %v\n", t.Sub(epochStart))
 		start = time.Now()
 		fmt.Println("---------------------")
 		fmt.Println("Running validation...")
@@ -135,8 +123,8 @@ func mnist() {
 	fmt.Printf("Total training time: %v \n", totElapsed)
 
 	for i := 0; i < 10; i++ {
-		din = xtrain.slice(int(idx.at(i)))
-		// din = xtrain.slice(int(idx.at(i)))
+		offset := 30000
+		din = xtrain.slice(i + offset)
 		din.flatten()
 		lout0 := dense(din, w0, b0, "relu")
 		lout1 := dense(lout0, w1, b1, "")
@@ -144,7 +132,8 @@ func mnist() {
 
 		cumLoss += totLoss
 		maxArg := sfout.argmax()
-		img := xtrainRGB.slice(int(idx.at(i)))
+		img := xtrain.slice(i + offset)
+		img = toRGB(img)
 		img.print()
 		fmt.Println("Prediction:", maxArg)
 	}
