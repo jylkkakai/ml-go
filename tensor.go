@@ -60,6 +60,16 @@ func (t *Tensor) set(x float32, coord ...int) {
 	t.arr[t.getIndex(coord)] = x
 }
 
+// 2D slice
+func (t *Tensor) setSlice(x Tensor, idx int) {
+	temp := []int{idx, 0, 0}
+	size := x.shape[0] * x.shape[1]
+	index := t.getIndex(temp)
+	// fmt.Println(idx, size, index)
+	for i := 0; i < size; i++ {
+		t.arr[index+i] = x.arr[i]
+	}
+}
 func (t *Tensor) add(x float32, coord ...int) {
 	t.arr[t.getIndex(coord)] += x
 }
@@ -83,6 +93,15 @@ func (t *Tensor) slice(x int) Tensor {
 	return ret
 }
 
+// For now only slices mnist data [28, 28]
+func (t *Tensor) deepSlice(x int) Tensor {
+	w := t.shape[1]
+	h := t.shape[2]
+	ret := Tensor{}
+	ret.shape = append([]int(nil), t.shape[1:3]...)
+	ret.arr = append([]float32(nil), t.arr[x*w*h:x*w*h+w*h]...)
+	return ret
+}
 func (t *Tensor) readNpy(f string) {
 
 	r, err := gonpy.NewFileReader(f)
