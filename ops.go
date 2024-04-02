@@ -7,6 +7,12 @@ import (
 	"math/rand"
 )
 
+type DenseCReturn struct {
+	e   float32
+	ret float32
+	i   int
+}
+
 func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 
 	var activ activation
@@ -21,13 +27,20 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 
 	out := Tensor{}
 	out.zero(w.shape[1])
-
+	c := make(chan DenseCReturn)
 	for i := 0; i < w.shape[1]; i++ {
-		temp := float32(0.0)
-		for j := 0; j < w.shape[0]; j++ {
-			temp += w.at(j, i) * in.at(j)
-		}
-		out.set(activ(temp+b.at(i)), i)
+		go func(in, w, b Tensor, activ activation, i int, ch chan DenseCReturn) {
+			ret := DenseCReturn{}
+			for j := 0; j < w.shape[0]; j++ {
+				ret.ret += w.at(j, i) * in.at(j)
+			}
+			ret.i = i
+			c <- ret
+		}(in, w, b, activ, i, c)
+	}
+	for i := 0; i < w.shape[1]; i++ {
+		temp := <-c
+		out.set(activ(temp.ret+b.at(temp.i)), temp.i)
 	}
 	return out
 }

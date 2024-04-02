@@ -14,10 +14,11 @@ func main() {
 
 func mnist() {
 
-	fmt.Println("Single thread, slices, all training data shuffled.")
-	epochs := 10
+	fmt.Println("Dense fp kernels threaded, slices, all training data shuffled.")
+	epochs := 6
 	batchSize := 10000
-	lr := float32(0.001)
+	lr := float32(0.01)
+	fmt.Printf("lr = %f, nn = (128, 128, 10)\n", lr)
 	xtrainRGB := Tensor{}
 	xtrainRGB.readNpy("test_data/mnist_x_train.npy")
 	xtrain := normalize(xtrainRGB)
@@ -39,9 +40,13 @@ func mnist() {
 	b0 := Tensor{}
 	b0.zero(128)
 	w1 := Tensor{}
-	w1.random(128, 10)
+	w1.random(128, 128)
 	b1 := Tensor{}
-	b1.zero(10)
+	b1.zero(128)
+	w2 := Tensor{}
+	w2.random(128, 10)
+	b2 := Tensor{}
+	b2.zero(10)
 
 	totStart := time.Now()
 	for epoch := 0; epoch < epochs; epoch++ {
@@ -56,26 +61,28 @@ func mnist() {
 			din = xtrain.slice(i)
 			din.flatten()
 			lout0 := dense(din, w0, b0, "relu")
-			lout1 := dense(lout0, w1, b1, "")
-			sfout := softmax(lout1)
+			lout1 := dense(lout0, w1, b1, "relu")
+			lout2 := dense(lout1, w2, b2, "")
+			sfout := softmax(lout2)
 
 			target.zero(10)
 			target.set(float32(1), int(ytrain.at(i)))
 			outLoss := loss(sfout, target)
 			totLoss = totalLoss(sfout, target)
 			cumLoss += totLoss
-			maxArg := lout1.argmax()
+			maxArg := sfout.argmax()
 			if maxArg == int(ytrain.at(i)) {
 				numOfCor += 1
 			}
 
-			l1loss := denseBP(w1, b1, outLoss, lout0, sfout, lr, "relu")
+			l2loss := denseBP(w2, b2, outLoss, lout1, sfout, lr, "relu")
+			l1loss := denseBP(w1, b1, l2loss, lout0, lout1, lr, "relu")
 			_ = denseBP(w0, b0, l1loss, din, lout0, lr, "")
 
 			if (i+1)%batchSize == 0 {
 				t := time.Now()
 				elapsed := t.Sub(start)
-				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t hits: %d\n", epoch+1, i+1, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize), numOfCor)
+				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t\n", epoch+1, i+1, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize))
 				start = time.Now()
 				numOfCor = 0
 				cumLoss = float32(0)
@@ -92,14 +99,15 @@ func mnist() {
 			din = xtest.slice(i)
 			din.flatten()
 			lout0 := dense(din, w0, b0, "relu")
-			lout1 := dense(lout0, w1, b1, "")
-			sfout := softmax(lout1)
+			lout1 := dense(lout0, w1, b1, "relu")
+			lout2 := dense(lout1, w2, b2, "")
+			sfout := softmax(lout2)
 
 			target.zero(10)
 			target.set(float32(1), int(ytest.at(i)))
 			totLoss = totalLoss(sfout, target)
 			cumLoss += totLoss
-			maxArg := lout1.argmax()
+			maxArg := sfout.argmax()
 
 			if maxArg == int(ytest.at(i)) {
 				numOfCor += 1
@@ -108,7 +116,7 @@ func mnist() {
 			if (i+1)%ytest.shape[0] == 0 {
 				t := time.Now()
 				elapsed := t.Sub(start)
-				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t hits: %d\n", epoch+1, i+1, ytest.shape[0], elapsed, cumLoss/float32(ytest.shape[0]), float32(numOfCor)/float32(ytest.shape[0]), numOfCor)
+				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t\n", epoch+1, i+1, ytest.shape[0], elapsed, cumLoss/float32(ytest.shape[0]), float32(numOfCor)/float32(ytest.shape[0]))
 				// finalLoss = totLoss
 				start = time.Now()
 
@@ -127,8 +135,12 @@ func mnist() {
 		din = xtrain.slice(i + offset)
 		din.flatten()
 		lout0 := dense(din, w0, b0, "relu")
-		lout1 := dense(lout0, w1, b1, "")
-		sfout := softmax(lout1)
+		lout1 := dense(lout0, w1, b1, "relu")
+		lout2 := dense(lout1, w2, b2, "")
+		sfout := softmax(lout2)
+		// lout0 := dense(din, w0, b0, "relu")
+		// lout1 := dense(lout0, w1, b1, "")
+		// sfout := softmax(lout1)
 
 		cumLoss += totLoss
 		maxArg := sfout.argmax()

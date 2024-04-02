@@ -133,7 +133,7 @@ func (t *Tensor) random(s ...int) {
 	t.shape = s
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < len; i++ {
-		t.arr[i] = (r.Float32()*2 - 1) / float32(100)
+		t.arr[i] = (r.Float32()*2 - 1) / float32(10)
 	}
 }
 
