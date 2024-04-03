@@ -33,7 +33,7 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 
 	out := Tensor{}
 	out.zero(w.shape[1])
-	c := make(chan DenseCReturn)
+	c := make(chan DenseCReturn, w.shape[1])
 	for i := 0; i < w.shape[1]; i++ {
 		go func(in, w, b Tensor, activ activation, i int, ch chan DenseCReturn) {
 			ret := DenseCReturn{}
@@ -64,7 +64,7 @@ func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr flo
 	}
 	errout := Tensor{}
 	errout.zero(input.shape[0])
-	c := make(chan DenseBPCReturn)
+	c := make(chan DenseBPCReturn, w.shape[1])
 	for i := 0; i < w.shape[1]; i++ {
 		go func(i int) {
 			delta := err.at(i) * activ(output.at(i))

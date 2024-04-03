@@ -14,7 +14,7 @@ func main() {
 
 func mnist() {
 
-	fmt.Println("Dense fp kernels threaded, slices, all training data shuffled.")
+	fmt.Println("Dense fp and bp kernels threaded, slices, all training data shuffled, channels buffered.")
 	epochs := 6
 	batchSize := 10000
 	lr := float32(0.01)
