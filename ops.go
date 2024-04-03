@@ -8,9 +8,15 @@ import (
 )
 
 type DenseCReturn struct {
-	e   float32
 	ret float32
 	i   int
+}
+type DenseBPCReturn struct {
+	e []float32
+	w []float32
+	b float32
+	i int
+	j int
 }
 
 func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
@@ -58,14 +64,37 @@ func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr flo
 	}
 	errout := Tensor{}
 	errout.zero(input.shape[0])
+	c := make(chan DenseBPCReturn)
 	for i := 0; i < w.shape[1]; i++ {
-		delta := err.at(i) * activ(output.at(i))
-		for j := 0; j < w.shape[0]; j++ {
-			errout.add(delta*w.at(j, i), j)
-			w.sub(lr*delta*input.at(j), j, i)
+		go func(i int) {
+			delta := err.at(i) * activ(output.at(i))
+			ret := DenseBPCReturn{}
+			ret.e = make([]float32, errout.shape[0])
+			ret.w = make([]float32, w.shape[0])
+			for j := 0; j < w.shape[0]; j++ {
+				ret.e[j] = delta * w.at(j, i)
+				// errout.add(delta*w.at(j, i), j)
+				ret.w[j] = lr * delta * input.at(j)
+				// w.sub(lr*delta*input.at(j), j, i)
 
+			}
+			ret.i = i
+			// ret.j = j
+			ret.b = lr * delta * 1
+			b.sub(lr*delta*1, i)
+			c <- ret
+		}(i)
+	}
+	for i := 0; i < w.shape[1]; i++ {
+		temp := <-c
+		// go func(i int) {
+		for j := 0; j < w.shape[0]; j++ {
+			errout.add(temp.e[j], j)
+			w.sub(temp.w[j], j, temp.i)
+			// b.sub(temp.b, temp.i)
+			// out.set(activ(temp.ret+b.at(temp.i)), temp.i)
 		}
-		b.sub(lr*delta*1, i)
+		// }(i)
 	}
 	return errout
 }
