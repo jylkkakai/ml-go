@@ -19,33 +19,34 @@ func mnist() {
 	batchSize := 10000
 	lr := float32(0.01)
 	fmt.Printf("lr = %f, nn = (128, 128, 10)\n", lr)
-	xtrainRGB := Tensor{}
+	xtrainRGB := &Tensor{}
 	xtrainRGB.readNpy("test_data/mnist_x_train.npy")
 	xtrain := normalize(xtrainRGB)
-	ytrain := Tensor{}
+	ytrain := &Tensor{}
 	ytrain.readNpy("test_data/mnist_y_train.npy")
-	xtestRGB := Tensor{}
+	xtestRGB := &Tensor{}
 	xtestRGB.readNpy("test_data/mnist_x_test.npy")
 	xtest := normalize(xtestRGB)
-	ytest := Tensor{}
+	ytest := &Tensor{}
 	ytest.readNpy("test_data/mnist_y_test.npy")
-	target := Tensor{}
-	din := Tensor{}
+	target := &Tensor{}
+	din := &Tensor{}
+	fmt.Printf("%T", din)
 	numOfCor := 0
 	cumLoss := float32(0)
 	totLoss := float32(0)
 
-	w0 := Tensor{}
+	w0 := &Tensor{}
 	w0.random(28*28, 128)
-	b0 := Tensor{}
+	b0 := &Tensor{}
 	b0.zero(128)
-	w1 := Tensor{}
+	w1 := &Tensor{}
 	w1.random(128, 128)
-	b1 := Tensor{}
+	b1 := &Tensor{}
 	b1.zero(128)
-	w2 := Tensor{}
+	w2 := &Tensor{}
 	w2.random(128, 10)
-	b2 := Tensor{}
+	b2 := &Tensor{}
 	b2.zero(10)
 
 	totStart := time.Now()
@@ -155,54 +156,54 @@ func testTraining() {
 
 	epochs := 100
 	batchSize := 1
-	w0 := Tensor{}
+	w0 := &Tensor{}
 	w0.readNpy("test_data/test_denseBP_w0.npy")
-	w1 := Tensor{}
+	w1 := &Tensor{}
 	w1.readNpy("test_data/test_denseBP_w1.npy")
-	w2 := Tensor{}
+	w2 := &Tensor{}
 	w2.readNpy("test_data/test_denseBP_w2.npy")
-	w3 := Tensor{}
+	w3 := &Tensor{}
 	w3.readNpy("test_data/test_denseBP_w3.npy")
-	w4 := Tensor{}
+	w4 := &Tensor{}
 	w4.readNpy("test_data/test_denseBP_w4.npy")
-	fw0 := Tensor{}
+	fw0 := &Tensor{}
 	fw0.readNpy("test_data/test_denseBP_fw0.npy")
-	fw1 := Tensor{}
+	fw1 := &Tensor{}
 	fw1.readNpy("test_data/test_denseBP_fw1.npy")
-	fw2 := Tensor{}
+	fw2 := &Tensor{}
 	fw2.readNpy("test_data/test_denseBP_fw2.npy")
-	fw3 := Tensor{}
+	fw3 := &Tensor{}
 	fw3.readNpy("test_data/test_denseBP_fw3.npy")
-	fw4 := Tensor{}
+	fw4 := &Tensor{}
 	fw4.readNpy("test_data/test_denseBP_fw4.npy")
-	b0 := Tensor{}
+	b0 := &Tensor{}
 	b0.readNpy("test_data/test_denseBP_b0.npy")
-	b1 := Tensor{}
+	b1 := &Tensor{}
 	b1.readNpy("test_data/test_denseBP_b1.npy")
-	b2 := Tensor{}
+	b2 := &Tensor{}
 	b2.readNpy("test_data/test_denseBP_b2.npy")
-	b3 := Tensor{}
+	b3 := &Tensor{}
 	b3.readNpy("test_data/test_denseBP_b3.npy")
-	b4 := Tensor{}
+	b4 := &Tensor{}
 	b4.readNpy("test_data/test_denseBP_b4.npy")
-	fb0 := Tensor{}
+	fb0 := &Tensor{}
 	fb0.readNpy("test_data/test_denseBP_fb0.npy")
-	fb1 := Tensor{}
+	fb1 := &Tensor{}
 	fb1.readNpy("test_data/test_denseBP_fb1.npy")
-	fb2 := Tensor{}
+	fb2 := &Tensor{}
 	fb2.readNpy("test_data/test_denseBP_fb2.npy")
-	fb3 := Tensor{}
+	fb3 := &Tensor{}
 	fb3.readNpy("test_data/test_denseBP_fb3.npy")
-	fb4 := Tensor{}
+	fb4 := &Tensor{}
 	fb4.readNpy("test_data/test_denseBP_fb4.npy")
 
-	gloss := Tensor{}
+	gloss := &Tensor{}
 	gloss.readNpy("test_data/test_denseBP_loss.npy")
-	din := Tensor{}
+	din := &Tensor{}
 	din.readNpy("test_data/test_denseBP_din.npy")
-	dout := Tensor{}
+	dout := &Tensor{}
 	dout.readNpy("test_data/test_denseBP_dout.npy")
-	target := Tensor{}
+	target := &Tensor{}
 	target.readNpy("test_data/test_denseBP_target.npy")
 	target.shape = target.shape[1:2]
 
@@ -242,19 +243,19 @@ func testTraining() {
 
 func simpleNet() {
 
-	w1 := Tensor{}
+	w1 := &Tensor{}
 	w1.readNpy("test_data/w1.npy")
-	w2 := Tensor{}
+	w2 := &Tensor{}
 	w2.readNpy("test_data/w2.npy")
-	b1 := Tensor{}
+	b1 := &Tensor{}
 	b1.readNpy("test_data/b1.npy")
-	b2 := Tensor{}
+	b2 := &Tensor{}
 	b2.readNpy("test_data/b2.npy")
-	in := Tensor{}
+	in := &Tensor{}
 	in.readNpy("test_data/in.npy")
-	gout := Tensor{}
+	gout := &Tensor{}
 	gout.readNpy("test_data/out.npy")
-	target := Tensor{
+	target := &Tensor{
 		shape: []int{2},
 		arr:   []float32{0.01, 0.99},
 	}

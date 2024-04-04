@@ -45,7 +45,7 @@ func TestAt(test *testing.T) {
 			if err != nil {
 				test.Fatal(err)
 			}
-			tensor := Tensor{}
+			tensor := &Tensor{}
 			tensor.readNpy(filename + ".npy")
 			// fmt.Println(tensor)
 			data := strings.Split(strings.ReplaceAll(string(readData), " ", ""), "\n")
@@ -90,7 +90,7 @@ func TestAt(test *testing.T) {
 
 func TestSet(test *testing.T) {
 
-	tensor := Tensor{}
+	tensor := &Tensor{}
 	tensor.zero(2, 3, 4, 5, 6)
 
 	for i := 0; i < 100; i++ {
@@ -112,13 +112,13 @@ func TestDense(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		filename := fmt.Sprintf("test_data/test_dense%d", i)
 		t.Run(filename, func(t *testing.T) {
-			w := Tensor{}
+			w := &Tensor{}
 			w.readNpy(filename + "_w.npy")
-			b := Tensor{}
+			b := &Tensor{}
 			b.readNpy(filename + "_b.npy")
-			din := Tensor{}
+			din := &Tensor{}
 			din.readNpy(filename + "_din.npy")
-			dout := Tensor{}
+			dout := &Tensor{}
 			dout.readNpy(filename + "_dout.npy")
 
 			// Change values to see that test fails
@@ -144,54 +144,54 @@ func TestDense(t *testing.T) {
 
 func TestDenseBP(t *testing.T) {
 
-	w0 := Tensor{}
+	w0 := &Tensor{}
 	w0.readNpy("test_data/test_denseBP_w0.npy")
-	w1 := Tensor{}
+	w1 := &Tensor{}
 	w1.readNpy("test_data/test_denseBP_w1.npy")
-	w2 := Tensor{}
+	w2 := &Tensor{}
 	w2.readNpy("test_data/test_denseBP_w2.npy")
-	w3 := Tensor{}
+	w3 := &Tensor{}
 	w3.readNpy("test_data/test_denseBP_w3.npy")
-	w4 := Tensor{}
+	w4 := &Tensor{}
 	w4.readNpy("test_data/test_denseBP_w4.npy")
-	fw0 := Tensor{}
+	fw0 := &Tensor{}
 	fw0.readNpy("test_data/test_denseBP_fw0.npy")
-	fw1 := Tensor{}
+	fw1 := &Tensor{}
 	fw1.readNpy("test_data/test_denseBP_fw1.npy")
-	fw2 := Tensor{}
+	fw2 := &Tensor{}
 	fw2.readNpy("test_data/test_denseBP_fw2.npy")
-	fw3 := Tensor{}
+	fw3 := &Tensor{}
 	fw3.readNpy("test_data/test_denseBP_fw3.npy")
-	fw4 := Tensor{}
+	fw4 := &Tensor{}
 	fw4.readNpy("test_data/test_denseBP_fw4.npy")
-	b0 := Tensor{}
+	b0 := &Tensor{}
 	b0.readNpy("test_data/test_denseBP_b0.npy")
-	b1 := Tensor{}
+	b1 := &Tensor{}
 	b1.readNpy("test_data/test_denseBP_b1.npy")
-	b2 := Tensor{}
+	b2 := &Tensor{}
 	b2.readNpy("test_data/test_denseBP_b2.npy")
-	b3 := Tensor{}
+	b3 := &Tensor{}
 	b3.readNpy("test_data/test_denseBP_b3.npy")
-	b4 := Tensor{}
+	b4 := &Tensor{}
 	b4.readNpy("test_data/test_denseBP_b4.npy")
-	fb0 := Tensor{}
+	fb0 := &Tensor{}
 	fb0.readNpy("test_data/test_denseBP_fb0.npy")
-	fb1 := Tensor{}
+	fb1 := &Tensor{}
 	fb1.readNpy("test_data/test_denseBP_fb1.npy")
-	fb2 := Tensor{}
+	fb2 := &Tensor{}
 	fb2.readNpy("test_data/test_denseBP_fb2.npy")
-	fb3 := Tensor{}
+	fb3 := &Tensor{}
 	fb3.readNpy("test_data/test_denseBP_fb3.npy")
-	fb4 := Tensor{}
+	fb4 := &Tensor{}
 	fb4.readNpy("test_data/test_denseBP_fb4.npy")
 
-	gloss := Tensor{}
+	gloss := &Tensor{}
 	gloss.readNpy("test_data/test_denseBP_loss.npy")
-	din := Tensor{}
+	din := &Tensor{}
 	din.readNpy("test_data/test_denseBP_din.npy")
-	dout := Tensor{}
+	dout := &Tensor{}
 	dout.readNpy("test_data/test_denseBP_dout.npy")
-	target := Tensor{}
+	target := &Tensor{}
 	target.readNpy("test_data/test_denseBP_target.npy")
 
 	lout0 := dense(din, w0, b0, "sigmoid")
@@ -275,7 +275,7 @@ func TestDenseBP(t *testing.T) {
 		compareTensor(t, b0, fb0)
 	})
 }
-func compareTensor(t *testing.T, x, y Tensor) {
+func compareTensor(t *testing.T, x, y *Tensor) {
 	eps := float32(0.00001)
 	for i := 0; i < len(x.arr); i++ {
 		if x.arr[i]+eps < y.arr[i] || x.arr[i]-eps > y.arr[i] {

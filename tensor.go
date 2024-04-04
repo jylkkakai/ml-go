@@ -61,7 +61,7 @@ func (t *Tensor) set(x float32, coord ...int) {
 }
 
 // 2D slice
-func (t *Tensor) setSlice(x Tensor, idx int) {
+func (t *Tensor) setSlice(x *Tensor, idx int) {
 	temp := []int{idx, 0, 0}
 	size := x.shape[0] * x.shape[1]
 	index := t.getIndex(temp)
@@ -84,23 +84,23 @@ func (t *Tensor) flatten() {
 }
 
 // For now only slices mnist data [28, 28]
-func (t *Tensor) slice(x int) Tensor {
+func (t *Tensor) slice(x int) *Tensor {
 	w := t.shape[1]
 	h := t.shape[2]
 	ret := Tensor{}
 	ret.zero(w, h)
 	ret.arr = t.arr[x*w*h : x*w*h+w*h]
-	return ret
+	return &ret
 }
 
 // For now only slices mnist data [28, 28]
-func (t *Tensor) deepSlice(x int) Tensor {
+func (t *Tensor) deepSlice(x int) *Tensor {
 	w := t.shape[1]
 	h := t.shape[2]
 	ret := Tensor{}
 	ret.shape = append([]int(nil), t.shape[1:3]...)
 	ret.arr = append([]float32(nil), t.arr[x*w*h:x*w*h+w*h]...)
-	return ret
+	return &ret
 }
 func (t *Tensor) readNpy(f string) {
 

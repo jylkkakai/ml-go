@@ -19,7 +19,7 @@ type DenseBPCReturn struct {
 	j int
 }
 
-func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
+func dense(in *Tensor, w *Tensor, b *Tensor, act string) *Tensor {
 
 	var activ activation
 	switch act {
@@ -31,11 +31,11 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 		activ = pass
 	}
 
-	out := Tensor{}
+	out := &Tensor{}
 	out.zero(w.shape[1])
 	c := make(chan DenseCReturn, w.shape[1])
 	for i := 0; i < w.shape[1]; i++ {
-		go func(in, w, b Tensor, activ activation, i int, ch chan DenseCReturn) {
+		go func(in, w, b *Tensor, activ activation, i int, ch chan DenseCReturn) {
 			ret := DenseCReturn{}
 			for j := 0; j < w.shape[0]; j++ {
 				ret.ret += w.at(j, i) * in.at(j)
@@ -51,7 +51,7 @@ func dense(in Tensor, w Tensor, b Tensor, act string) Tensor {
 	return out
 }
 
-func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr float32, act string) Tensor {
+func denseBP(w *Tensor, b *Tensor, err *Tensor, input *Tensor, output *Tensor, lr float32, act string) *Tensor {
 
 	var activ activation
 	switch act {
@@ -62,7 +62,7 @@ func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr flo
 	default:
 		activ = pass
 	}
-	errout := Tensor{}
+	errout := &Tensor{}
 	errout.zero(input.shape[0])
 	c := make(chan DenseBPCReturn, w.shape[1])
 	for i := 0; i < w.shape[1]; i++ {
@@ -100,15 +100,15 @@ func denseBP(w Tensor, b Tensor, err Tensor, input Tensor, output Tensor, lr flo
 }
 
 // 1D Tensor
-func softmax(t Tensor) Tensor {
+func softmax(t *Tensor) *Tensor {
 
-	ret := Tensor{}
+	ret := &Tensor{}
 	ret.zero(t.shape[0])
 	// sum := t.sum()
 	sum := float32(0)
 	max := t.at(t.argmax())
 
-	xval := Tensor{}
+	xval := &Tensor{}
 	xval.zero(t.shape[0])
 	for i := 0; i < len(t.arr); i++ {
 		xval.set(t.arr[i]-max, i)
@@ -123,7 +123,7 @@ func softmax(t Tensor) Tensor {
 	return ret
 }
 
-func shuffleTrainingData(in, classes Tensor) {
+func shuffleTrainingData(in, classes *Tensor) {
 
 	for i := classes.shape[0]; i > 0; i-- {
 		idx := rand.Intn(i)
@@ -136,8 +136,8 @@ func shuffleTrainingData(in, classes Tensor) {
 	}
 }
 
-func loss(arr Tensor, target Tensor) Tensor {
-	resArr := Tensor{}
+func loss(arr *Tensor, target *Tensor) *Tensor {
+	resArr := &Tensor{}
 	resArr.zero(arr.shape[0])
 	for i := 0; i < arr.shape[0]; i++ {
 		// temp := (arr.at(i) - target.at(i))
@@ -147,7 +147,7 @@ func loss(arr Tensor, target Tensor) Tensor {
 	return resArr
 }
 
-func totalLoss(arr Tensor, target Tensor) float32 {
+func totalLoss(arr *Tensor, target *Tensor) float32 {
 	result := float32(0)
 	for i := 0; i < arr.shape[0]; i++ {
 		temp := (target.at(i) - arr.at(i))
@@ -157,9 +157,9 @@ func totalLoss(arr Tensor, target Tensor) float32 {
 	return result / float32(arr.shape[0])
 }
 
-func normalize(t Tensor) Tensor {
+func normalize(t *Tensor) *Tensor {
 
-	ret := Tensor{}
+	ret := &Tensor{}
 	if len(t.shape) == 2 {
 		ret.zero(t.shape[0], t.shape[1])
 	} else if len(t.shape) == 3 {
@@ -174,9 +174,9 @@ func normalize(t Tensor) Tensor {
 }
 
 // Reverse normalize
-func toRGB(t Tensor) Tensor {
+func toRGB(t *Tensor) *Tensor {
 
-	ret := Tensor{}
+	ret := &Tensor{}
 	if len(t.shape) == 2 {
 		ret.zero(t.shape[0], t.shape[1])
 	} else if len(t.shape) == 3 {
