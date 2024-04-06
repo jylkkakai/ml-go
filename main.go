@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -10,9 +11,10 @@ func main() {
 	// simpleNet()
 	// testTraining()
 	mnist()
+	// mnistConcurrent()
+	// test()
 }
-
-func mnist() {
+func mnistConcurrent() {
 
 	fmt.Println("Dense fp and bp kernels threaded, slices, all training data shuffled, channels buffered.")
 	epochs := 6
@@ -47,6 +49,13 @@ func mnist() {
 	w2.random(128, 10)
 	b2 := &Tensor{}
 	b2.zero(10)
+	var lout0 *Tensor
+	var lout1 *Tensor
+	var lout2 *Tensor
+	var sfout *Tensor
+	var outLoss *Tensor
+	var l2loss *Tensor
+	var l1loss *Tensor
 	cfp := make(chan int)
 
 	totStart := time.Now()
@@ -60,25 +69,25 @@ func mnist() {
 		for i := 0; i < ytrain.shape[0]/batchSize; i++ { // ytrain.shape[0]
 			for j := 0; j < batchSize; j++ {
 				go func(i, j int) {
-					din = xtrain.slice(i + j)
+					din = xtrain.slice(i*j + j)
 					din.flatten()
-					lout0 := dense(din, w0, b0, "relu")
-					lout1 := dense(lout0, w1, b1, "relu")
-					lout2 := dense(lout1, w2, b2, "")
-					sfout := softmax(lout2)
+					lout0 = dense(din, w0, b0, "relu")
+					lout1 = dense(lout0, w1, b1, "relu")
+					lout2 = dense(lout1, w2, b2, "")
+					sfout = softmax(lout2)
 
 					target.zero(10)
 					target.set(float32(1), int(ytrain.at(i)))
-					outLoss := loss(sfout, target)
+					outLoss = loss(sfout, target)
 					// cfp <- outLoss
 					totLoss = totalLoss(sfout, target)
 					cumLoss += totLoss
 					maxArg := sfout.argmax()
-					if maxArg == int(ytrain.at(i)) {
+					if maxArg == int(ytrain.at(i*j+j)) {
 						numOfCor += 1
 					}
-					l2loss := denseBP(w2, b2, outLoss, lout1, sfout, lr, "relu")
-					l1loss := denseBP(w1, b1, l2loss, lout0, lout1, lr, "relu")
+					l2loss = denseBP(w2, b2, outLoss, lout1, sfout, lr, "relu")
+					l1loss = denseBP(w1, b1, l2loss, lout0, lout1, lr, "relu")
 					_ = denseBP(w0, b0, l1loss, din, lout0, lr, "")
 					// if (i+1)%batchSize == 0 {
 					// 	t := time.Now()
@@ -100,14 +109,168 @@ func mnist() {
 				// _ = denseBP(w0, b0, l1loss, din, lout0, lr, "")
 			}
 			//
-			t := time.Now()
-			elapsed := t.Sub(start)
-			fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t\n", epoch+1, i*batchSize, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize))
-			start = time.Now()
-			numOfCor = 0
-			cumLoss = float32(0)
+			// t := time.Now()
+			// elapsed := t.Sub(start)
+			// fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t\n", epoch+1, i*batchSize, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize))
+			// start = time.Now()
+			// numOfCor = 0
+			// cumLoss = float32(0)
 
-		
+			if (i+1)%10000 == 0 {
+
+				// t := time.Now()
+				// elapsed := t.Sub(start)
+				// fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t\n", epoch+1, i*batchSize, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize))
+				// start = time.Now()
+				// numOfCor = 0
+				// cumLoss = float32(0)
+				// start = time.Now()
+				fmt.Println("---------------------")
+				fmt.Println("Running validation...")
+				for i := 0; i < ytest.shape[0]; i++ { // ytrain.shape[0]
+
+					din = xtest.slice(i)
+					din.flatten()
+					lout0 := dense(din, w0, b0, "relu")
+					lout1 := dense(lout0, w1, b1, "relu")
+					lout2 := dense(lout1, w2, b2, "")
+					sfout := softmax(lout2)
+
+					target.zero(10)
+					target.set(float32(1), int(ytest.at(i)))
+					totLoss = totalLoss(sfout, target)
+					cumLoss += totLoss
+					maxArg := sfout.argmax()
+
+					if maxArg == int(ytest.at(i)) {
+						numOfCor += 1
+					}
+
+					if (i+1)%ytest.shape[0] == 0 {
+						t := time.Now()
+						elapsed := t.Sub(start)
+						fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t\n", epoch+1, i+1, ytest.shape[0], elapsed, cumLoss/float32(ytest.shape[0]), float32(numOfCor)/float32(ytest.shape[0]))
+						// finalLoss = totLoss
+						start = time.Now()
+
+						numOfCor = 0
+						cumLoss = float32(0)
+
+					}
+				}
+			}
+		}
+
+		t := time.Now()
+		fmt.Printf("Epoch elapsed time: %v\n", t.Sub(epochStart))
+		// lr = lr * float32(0.5)
+	}
+	totElapsed := time.Since(totStart)
+	fmt.Printf("Total training time: %v \n", totElapsed)
+
+	for i := 0; i < 10; i++ {
+		offset := 30000
+		din = xtrain.slice(i + offset)
+		din.flatten()
+		lout0 := dense(din, w0, b0, "relu")
+		lout1 := dense(lout0, w1, b1, "relu")
+		lout2 := dense(lout1, w2, b2, "")
+		sfout := softmax(lout2)
+		// lout0 := dense(din, w0, b0, "relu")
+		// lout1 := dense(lout0, w1, b1, "")
+		// sfout := softmax(lout1)
+
+		cumLoss += totLoss
+		maxArg := sfout.argmax()
+		img := xtrain.slice(i + offset)
+		img = toRGB(img)
+		img.print()
+		fmt.Println("Prediction:", maxArg)
+	}
+}
+func mnist() {
+
+	fmt.Println("Dense fp and bp kernels threaded, slices, all training data shuffled, channels buffered.")
+	epochs := 6
+	batchSize := 10000
+	lr := float32(0.01)
+	fmt.Printf("lr = %f, nn = (128, 128, 10)\n", lr)
+	xtrainRGB := &Tensor{}
+	xtrainRGB.readNpy("test_data/mnist_x_train.npy")
+	xtrain := normalize(xtrainRGB)
+	ytrain := &Tensor{}
+	ytrain.readNpy("test_data/mnist_y_train.npy")
+	xtestRGB := &Tensor{}
+	xtestRGB.readNpy("test_data/mnist_x_test.npy")
+	xtest := normalize(xtestRGB)
+	ytest := &Tensor{}
+	ytest.readNpy("test_data/mnist_y_test.npy")
+	target := &Tensor{}
+	din := &Tensor{}
+	numOfCor := 0
+	cumLoss := float32(0)
+	totLoss := float32(0)
+
+	w0 := &Tensor{}
+	w0.random(28*28, 128)
+	b0 := &Tensor{}
+	b0.zero(128)
+	w1 := &Tensor{}
+	w1.random(128, 128)
+	b1 := &Tensor{}
+	b1.zero(128)
+	w2 := &Tensor{}
+	w2.random(128, 10)
+	b2 := &Tensor{}
+	b2.zero(10)
+	var lout0 *Tensor
+	var lout1 *Tensor
+	var lout2 *Tensor
+	var sfout *Tensor
+	var outLoss *Tensor
+	var l2loss *Tensor
+	var l1loss *Tensor
+
+	totStart := time.Now()
+	for epoch := 0; epoch < epochs; epoch++ {
+
+		shuffleTrainingData(xtrain, ytrain)
+		epochStart := time.Now()
+		fmt.Println("---------------------")
+		fmt.Println("Training...")
+		start := time.Now()
+		for i := 0; i < ytrain.shape[0]; i++ { // ytrain.shape[0]
+			din = xtrain.slice(i)
+			din.flatten()
+			lout0 = dense(din, w0, b0, "relu")
+			lout1 = dense(lout0, w1, b1, "relu")
+			lout2 = dense(lout1, w2, b2, "")
+			sfout = softmax(lout2)
+
+			target.zero(10)
+			target.set(float32(1), int(ytrain.at(i)))
+			outLoss = loss(sfout, target)
+			// cfp <- outLoss
+			totLoss = totalLoss(sfout, target)
+			cumLoss += totLoss
+			maxArg := sfout.argmax()
+			if maxArg == int(ytrain.at(i)) {
+				numOfCor += 1
+			}
+			l2loss = denseBP(w2, b2, outLoss, lout1, sfout, lr, "relu")
+			l1loss = denseBP(w1, b1, l2loss, lout0, lout1, lr, "relu")
+			_ = denseBP(w0, b0, l1loss, din, lout0, lr, "")
+			if (i+1)%batchSize == 0 {
+				t := time.Now()
+				elapsed := t.Sub(start)
+				fmt.Printf("Epoch: %d \t%d/%d\tElapsed time: %v \tAvg loss: %f \t accuracy: %f\t\n", epoch+1, i+1, ytrain.shape[0], elapsed, cumLoss/float32(batchSize), float32(numOfCor)/float32(batchSize))
+				start = time.Now()
+				numOfCor = 0
+				cumLoss = float32(0)
+
+			}
+
+		}
 
 		t := time.Now()
 		fmt.Printf("Epoch elapsed time: %v\n", t.Sub(epochStart))
@@ -169,6 +332,93 @@ func mnist() {
 		img.print()
 		fmt.Println("Prediction:", maxArg)
 	}
+}
+
+func test() {
+
+	t := &Tensor{}
+	t.zero(10)
+	fmt.Println(*t)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
+	start := time.Now()
+	for i := 0; i < 1000000; i++ {
+		for j := 0; j < t.shape[0]; j++ {
+			t.add(float32(j), j)
+		}
+
+		// fmt.Println(i, *t)
+	}
+	end := time.Now()
+	fmt.Printf("%v\n", end.Sub(start))
+	start = time.Now()
+	fmt.Println(*t)
+	for i := 0; i < 1000000; i++ {
+		for j := 0; j < t.shape[0]; j++ {
+			t.sub(float32(j), j)
+		}
+
+		// fmt.Println(i, *t)
+	}
+	end = time.Now()
+	fmt.Printf("%v\n", end.Sub(start))
+	start = time.Now()
+
+	fmt.Println(*t)
+	// c := make(chan int)
+	wg.Add(1000000)
+	for i := 0; i < 1000000; i++ {
+		go func(i int) {
+			defer wg.Done()
+			mu.Lock()
+			for j := 0; j < t.shape[0]; j++ {
+				// mu.Lock()
+				t.add(float32(j), j)
+				// mu.Unlock()
+			}
+			// c <- i
+			mu.Unlock()
+		}(i)
+
+	}
+	wg.Wait()
+	end = time.Now()
+	fmt.Printf("%v\n", end.Sub(start))
+	start = time.Now()
+	// for i := 0; i < 1000000; i++ {
+	// 	x := <-c
+	// 	_ = x
+	// 	// fmt.Println(x, *t)
+	//
+	// }
+
+	fmt.Println(*t)
+	for i := 0; i < 1000000; i++ {
+		wg.Add(1)
+		go func(i int) {
+			mu.Lock()
+			for j := 0; j < t.shape[0]; j++ {
+				t.sub(float32(j), j)
+			}
+			// c <- i
+			wg.Done()
+			mu.Unlock()
+		}(i)
+	}
+	//
+	wg.Wait()
+	end = time.Now()
+	fmt.Printf("%v\n", end.Sub(start))
+	start = time.Now()
+	// for i := 0; i < 1000000; i++ {
+	// 	x := <-c
+	// 	_ = x
+	// 	// fmt.Println(x, *t)
+	//
+	// }
+
+	fmt.Println(*t)
 }
 
 func testTraining() {

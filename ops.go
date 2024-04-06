@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"sync"
 )
 
 type DenseCReturn struct {
@@ -64,10 +65,12 @@ func denseBP(w *Tensor, b *Tensor, err *Tensor, input *Tensor, output *Tensor, l
 	}
 	errout := &Tensor{}
 	errout.zero(input.shape[0])
-	c := make(chan DenseBPCReturn, w.shape[1])
+	c := make(chan DenseBPCReturn)
 	for i := 0; i < w.shape[1]; i++ {
+
+		delta := err.at(i) * activ(output.at(i))
 		go func(i int) {
-			delta := err.at(i) * activ(output.at(i))
+			// delta := err.at(i) * activ(output.at(i))
 			ret := DenseBPCReturn{}
 			ret.e = make([]float32, errout.shape[0])
 			ret.w = make([]float32, w.shape[0])
@@ -81,21 +84,32 @@ func denseBP(w *Tensor, b *Tensor, err *Tensor, input *Tensor, output *Tensor, l
 			ret.i = i
 			// ret.j = j
 			ret.b = lr * delta * 1
-			b.sub(lr*delta*1, i)
+			// b.sub(lr*delta*1, i)
 			c <- ret
 		}(i)
+
+		// b.sub(lr*delta*1, i)
 	}
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	_ = &mu
 	for i := 0; i < w.shape[1]; i++ {
 		temp := <-c
-		// go func(i int) {
-		for j := 0; j < w.shape[0]; j++ {
-			errout.add(temp.e[j], j)
-			w.sub(temp.w[j], j, temp.i)
-			// b.sub(temp.b, temp.i)
-			// out.set(activ(temp.ret+b.at(temp.i)), temp.i)
-		}
-		// }(i)
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			// mu.Lock()
+			for j := 0; j < w.shape[0]; j++ {
+				errout.add(temp.e[j], j)
+				w.sub(temp.w[j], j, temp.i)
+				// out.set(activ(temp.ret+b.at(temp.i)), temp.i)
+			}
+			b.sub(temp.b, temp.i)
+
+			// mu.Unlock()
+		}(i)
 	}
+	wg.Wait()
 	return errout
 }
 

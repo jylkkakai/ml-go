@@ -5,12 +5,14 @@ import (
 	"github.com/kshedden/gonpy"
 	"log"
 	"math/rand"
+	// "sync"
 	"time"
 )
 
 type Tensor struct {
 	shape []int
 	arr   []float32
+	// mu    sync.Mutex
 }
 
 // Prints only 2D tensor
@@ -57,11 +59,15 @@ func (t *Tensor) at(coord ...int) float32 {
 	return t.arr[t.getIndex(coord)]
 }
 func (t *Tensor) set(x float32, coord ...int) {
+	// t.mu.Lock()
+	// defer t.mu.Unlock()
 	t.arr[t.getIndex(coord)] = x
 }
 
 // 2D slice
 func (t *Tensor) setSlice(x *Tensor, idx int) {
+	// t.mu.Lock()
+	// defer t.mu.Unlock()
 	temp := []int{idx, 0, 0}
 	size := x.shape[0] * x.shape[1]
 	index := t.getIndex(temp)
@@ -71,10 +77,14 @@ func (t *Tensor) setSlice(x *Tensor, idx int) {
 	}
 }
 func (t *Tensor) add(x float32, coord ...int) {
+	// t.mu.Lock()
+	// defer t.mu.Unlock()
 	t.arr[t.getIndex(coord)] += x
 }
 
 func (t *Tensor) sub(x float32, coord ...int) {
+	// t.mu.Lock()
+	// defer t.mu.Unlock()
 	t.arr[t.getIndex(coord)] -= x
 }
 
